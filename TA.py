@@ -3,14 +3,39 @@ import requests
 from st_copy_to_clipboard import st_copy_to_clipboard
 
 # Read the text file globally
-with open("gpt_prompt.txt", "r", encoding="utf-8") as file:
+with open("coins_gpt_prompt.txt", "r", encoding="utf-8") as file:
     file_content = file.read()
 
-def display_text_with_copy_button(coin_name):
-    global file_content  # Declare the global variable so it can be modified
+# Read the text file globally
+with open("individual_coin_gpt_prompt.txt", "r", encoding="utf-8") as file:
+    file_content1 = file.read()
+
+def all_coins_gpt_prompt_copy(coin_list):
+    # Check if `coin_list` is in `st.session_state`
+    if coin_list not in st.session_state:
+        # If `file_content` is not in session_state, set a placeholder
+        if 'file_content' not in st.session_state:
+            st.session_state.file_content = file_content
+
+        # Replace the placeholder with the coin list
+        updated_content = st.session_state.file_content.replace("{coin_list}", coin_list)
+
+        # Attempt to copy content to clipboard and store it in session state
+        try:
+            st.session_state.clipboard = updated_content
+            st_copy_to_clipboard(updated_content)  # Assuming `st_copy_to_clipboard` is defined elsewhere
+        except Exception as e:
+            st.error(f"An error occurred while copying to clipboard: {e}")
+
+        # Update session state to reflect the change
+        st.session_state.coin_list = coin_list
+        st.session_state.updated_content = updated_content
+
+def individual_coin_gpt_prompt(coin_name):
+    global file_content1  # Declare the global variable so it can be modified
 
     # Replace the placeholder with the coin name
-    updated_content = file_content.replace("{CoinName}", coin_name)
+    updated_content = file_content1.replace("{CoinName}", coin_name)
     # st.code(updated_content, language="None", wrap_lines = True)
 
     try:
@@ -45,24 +70,24 @@ def classify_market_cap(market_cap):
 def calculate_vol_mcap_ratio(market_cap, total_volume):
     ratio = total_volume / market_cap
 
-    st.success("Liquidity and trading activity")
+    st.success("Liquidity and trading activity - >30% = Buy")
     st.metric(label="Vol. (24h) / MCap Ratio", value=f"{ratio:.4f}", delta=f"{(ratio*100):.2f}%", border=True)
 
     # Interpretation based on the ratio
     if ratio > 0.1:
         st.markdown("""
-            - Interpretation: High Ratio (Active Trading, High Liquidity) > 0.1 (10%).
+            - High Ratio (Active Trading, High Liquidity) > 0.1 (10%).
             - Actively traded relative to its market cap, indicating high liquidity.
             - Likely popular, well-known, or experiencing a surge due to news or market events.
             """)
     elif ratio > 0.01:
         st.markdown("""
-            - Interpretation: Moderate Ratio (Moderate Activity and Liquidity) > 0.01 (1%)
+            - Moderate Ratio (Moderate Activity and Liquidity) > 0.01 (1%)
             - Moderate liquidity, trading activity, potentially a stable coin.
             """)
     else:
         st.markdown("""
-            - Interpretation: Low Ratio (Low Trading Activity, Low Liquidity)
+            - Low Ratio (Low Trading Activity, Low Liquidity)
             - Limited trading activity, low liquidity. Not be as popular or may be held by long-term investors.
             - Could signal risks of price slippage for large trades.
             """)
@@ -85,11 +110,11 @@ def check_increased_trading_volume(coin_symbol):
 
         # Determine if the pump is likely to last based on the volume increase
         if volume_increase > 50:
-            pump_likely = "The pump is likely to last due to a significant increase in trading volume."
+            pump_likely = "The pump/dump is likely to last due to a significant increase in trading volume."
         elif volume_increase > 20:
-            pump_likely = "The pump could last, but further confirmation is needed (moderate volume increase)."
+            pump_likely = "The pump/dump could last, but further confirmation is needed (moderate volume increase)."
         else:
-            pump_likely = "The pump may be short-lived, as the volume increase is not very significant."
+            pump_likely = "The pump/dump may be short-lived, as the volume increase is not very significant."
 
         # Check if the trading volume has increased or not
         if volume_increase > 0:
@@ -196,3 +221,69 @@ def circulating_supply_vs_total_supply(circulating_supply, total_supply):
     else:
         st.write("✅ All or nearly all of the total supply is already in circulation.")
         st.write("This makes the supply highly predictable and reduces the risk of dilution.")
+
+# https://www.tradingview.com/widget-docs/widgets/charts/symbol-overview/
+def embedTradingViewChart(coin_symbol):
+    # Format the coin symbol properly for TradingView
+    html_code = f"""
+        <!-- TradingView Widget BEGIN -->
+        <div class="tradingview-widget-container">
+
+          <div class="tradingview-widget-copyright">
+            <a href="https://www.tradingview.com/chart/?symbol={coin_symbol.split('|')[0]}" target="_blank">
+              <span class="blue-text">Track {coin_symbol.split('|')[0]} on TradingView</span>
+            </a>
+
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
+          {{
+          "symbols": [
+            [
+              "{coin_symbol}"
+            ]
+          ],
+          "chartOnly": false,
+          "width": "100%",
+          "locale": "en",
+          "colorTheme": "light",
+          "autosize": true,
+          "showVolume": true,
+          "showMA": true,
+          "hideDateRanges": false,
+          "hideMarketStatus": false,
+          "hideSymbolLogo": false,
+          "scalePosition": "right",
+          "scaleMode": "Normal",
+          "fontFamily": "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+          "fontSize": "7",
+          "noTimeScale": false,
+          "valuesTracking": "1",
+          "changeMode": "price-and-percent",
+          "chartType": "line",
+          "maLineColor": "#2962FF",
+          "maLineWidth": 3,
+          "maLength": 9,
+          "headerFontSize": "medium",
+          "lineWidth": 25,
+          "lineType": 0,
+          "dateRanges": [
+            "1w|1",
+            "1m|30",
+            "3m|60",
+            "12m|1D",
+            "60m|1W",
+            "all|1M"
+          ]
+          }}
+          </script>
+        </div>
+        <!-- TradingView Widget END -->
+    """
+    return html_code
+
+def get_technicals_stats(coin_symbol):
+    technicals_url = (
+        f"https://www.tradingview.com/symbols/{coin_symbol}/technicals/"
+    )
+    st.markdown(f'[View Tradingview Technicals for {coin_symbol}]({technicals_url})')
+
+
