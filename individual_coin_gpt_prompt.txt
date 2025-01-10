@@ -1,4 +1,6 @@
-Do very strict analysis with strict scoring for {CoinName} coin similar to the example content below. Try to put as low score as possible.
+Do very strict analysis with strict scoring for bitcoin coin similar to the example content below. Try to put as low score as possible.
+
+Moonbeam (GLMR) use case: Moonbeam provides the tools necessary for building decentralized networks for physical infrastructure, aiming for improved management and financing efficiency
 
 1. Strong Fundamentals
 	•	Launch Year: 2020

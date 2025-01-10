@@ -127,15 +127,11 @@ def main():
                             price_vs_atl(coin['current_price'], coin['atl'])
                             liquidity_to_supply_ratio(coin['total_volume'], coin['circulating_supply'])
     with homeCol2:
-        gptpromptCol1, gptpromptCol2 = st.columns(2)
+        st.write("Analyze coins using chatgpt")
+        all_coins_gpt_prompt_copy(str(selected_coins))
 
-        with gptpromptCol1:
-            st.write("Analyze coins using chatgpt")
-            all_coins_gpt_prompt_copy(str(selected_coins))
-
-        with gptpromptCol2:
-            st.write("Create table to show X account followers count")
-            st_copy_to_clipboard("Create a table to show numbers of followers in descending order based on the follower count:" + str(selected_coins) + " crypto coins")
+        st.write("Create table to show X account followers count")
+        st_copy_to_clipboard("Create a table to show numbers of followers in descending order based on the follower count:" + str(selected_coins) + " crypto coins")
 
 
     # Fear and Greed Meter
@@ -157,17 +153,25 @@ def main():
     st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders selling their cryptocurrencies")
     colUSDT, colUSDC = st.columns(2)
     with colUSDT:
-        components.html(embedTradingViewChart("CRYPTOCAP:USDT.D|1M"), width=700, height=450)
+        components.html(embedTradingViewChart("CRYPTOCAP:USDT.D|1M"), height=450)
     with colUSDC:
-        components.html(embedTradingViewChart("CRYPTOCAP:USDC.D|1M"), width=700, height=450)
+        components.html(embedTradingViewChart("CRYPTOCAP:USDC.D|1M"), height=450)
 
     totalCol, total2Col, total3Col = st.columns(3)
     with totalCol:
-        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL"), width=470, height=450)
+        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL"), height=450)
     with total2Col:
-        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL2"), width=470, height=450)
+        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL2"), height=450)
     with total3Col:
-        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3"), width=470, height=450)
+        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3"), height=450)
+
+    components.html("""
+    <iframe src="https://cryptobubbles.net" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+    """, height=800)
+
+    components.html("""
+    <iframe src="https://banterbubbles.com/" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+    """, height=800)
 
     # DXY
     st.success("DXY (U.S. Dollar Index)")
