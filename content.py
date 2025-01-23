@@ -73,6 +73,9 @@ def getcontent(selected_coins):
                             with col1:
                                 get_google_trends(str(coin['name']) + " coin")
                                 get_technicals_stats(str(coin['symbol']))
+                                get_tokenomist_stats(str(coin['id']))
+                                st.image("images/redflag_token_distribution.jpg")
+
                                 get_coin_creation_date(coin['id'])
                             with col2:
                                 st.write("Fundamentals analysis")
@@ -95,7 +98,6 @@ def getcontent(selected_coins):
                             d.metric("ATL Change %", f"{coin['atl_change_percentage']:.2f}%", "", border=True)
 
                             check_increased_trading_volume(coin['id'].lower())
-                            # embed_google_trends_chart(str(coin['name']) + " coin")
                             calculate_vol_mcap_ratio(coin['market_cap'], coin['total_volume'])
                             fdv_vs_market_cap(coin['fully_diluted_valuation'], coin['market_cap'])
                             circulating_supply_vs_total_supply(coin['circulating_supply'], coin['total_supply'])
@@ -133,6 +135,11 @@ def getfng():
                     - **76-100**: Extreme Greed / Euphoria (Bubble territory, extreme caution advised).
                     """)
 
+    components.html("""
+    <iframe src="https://www.coinglass.com/pro/i/RsiHeatMap" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
+    """, height=800)
+
+
 def getsubcontent():
     st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders selling their cryptocurrencies")
     colUSDT, colUSDC = st.columns(2)
@@ -153,8 +160,12 @@ def getsubcontent():
     <iframe src="https://cryptobubbles.net" width=100% height="800px" style="border: none" loading="lazy"></iframe>
     """, height=800)
 
+    # components.html("""
+    # <iframe src="https://banterbubbles.com/" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+    # """, height=800)
+
     components.html("""
-    <iframe src="https://banterbubbles.com/" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+    <iframe src="https://www.coinglass.com/pro/futures/LiquidationHeatMap" width=100% height="800px" style="border: none" loading="lazy"></iframe>
     """, height=800)
 
 
@@ -191,6 +202,11 @@ def get_footer_data():
     with youtubeCol:
         st.success("Socialblade Stats")
         st.markdown("[InvestAnswers](https://socialblade.com/youtube/channel/UClgJyzwGs-GyaNxUHcLZrkg)")
+
+        st.success("Rugpull / Honeypot")
+        st.markdown("[Rugcheck](https://rugcheck.xyz)")
+        st.markdown("[Token Sniffer](https://tokensniffer.com/)")
+        st.markdown("[Sol Sniffer](https://www.solsniffer.com)")
 
     with otherCol:
         st.success("On-Chain Analysis")

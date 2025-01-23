@@ -255,6 +255,12 @@ def circulating_supply_vs_total_supply(circulating_supply, total_supply):
         st.write("✅ All or nearly all of the total supply is already in circulation.")
         st.write("This makes the supply highly predictable and reduces the risk of dilution.")
 
+def get_tokenomist_stats(coin_id):
+    tokenomist_url = (
+        f"https://tokenomist.ai/{coin_id}"
+    )
+    st.markdown(f'[View Tokenomist for {coin_id}]({tokenomist_url})')
+
 # https://www.tradingview.com/widget-docs/widgets/charts/symbol-overview/
 def embedTradingViewChart(coin_symbol):
     # Format the coin symbol properly for TradingView
