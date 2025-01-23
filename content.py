@@ -97,7 +97,7 @@ def getcontent(selected_coins):
                             c.metric("ATH Change %", f"{coin['ath_change_percentage']:.2f}%", "", border=True)
                             d.metric("ATL Change %", f"{coin['atl_change_percentage']:.2f}%", "", border=True)
 
-                            check_increased_trading_volume(coin['id'].lower())
+                            check_increased_trading_volume(str(coin['id'].lower()))
                             calculate_vol_mcap_ratio(coin['market_cap'], coin['total_volume'])
                             fdv_vs_market_cap(coin['fully_diluted_valuation'], coin['market_cap'])
                             circulating_supply_vs_total_supply(coin['circulating_supply'], coin['total_supply'])

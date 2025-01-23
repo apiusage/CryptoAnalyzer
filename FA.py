@@ -151,9 +151,9 @@ def check_increased_trading_volume(coin_symbol):
 
         # Check if the trading volume has increased or not
         if volume_increase > 0:
-            return f"Trading volume of {coin_symbol} has increased by {volume_increase:.2f}% in the last 24 hours.\n{pump_likely}"
+            st.write(f"Trading volume of {coin_symbol} has increased by **{volume_increase:.2f}%** in the last 24 hours.\n{pump_likely}")
         else:
-            return f"Trading volume of {coin_symbol} has not increased in the last 24 hours."
+            st.write(f"Trading volume of {coin_symbol} has not increased in the last 24 hours.")
 
     except requests.exceptions.RequestException as e:
         return f"Error fetching data: {e}"
