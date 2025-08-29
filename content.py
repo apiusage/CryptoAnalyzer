@@ -141,7 +141,7 @@ def getfng():
 
 
 def getsubcontent():
-    st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders selling their cryptocurrencies")
+    st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders and investors moving funds out of volatile assets (like BTC, ETH, altcoins) into stablecoins.")
     colUSDT, colUSDC = st.columns(2)
     with colUSDT:
         components.html(embedTradingViewChart("CRYPTOCAP:USDT.D|1M"), height=450)
@@ -184,7 +184,7 @@ def get_footer_data():
     with statsCol:
         st.success("Links")
         st.markdown("[FOMC Rate Moves](https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.htmlwatch-tool.html)")
-        st.markdown("[Rainbow Chart](https://www.blockchaincenter.net/en/bitcoin-rainbow-chart/)")
+        st.markdown("[Pi Cycle Top Indicator](https://charts.bitbo.io/pi-cycle-top/)")
         st.markdown("[MVRV Z - Score](https://www.coinglass.com/pro/i/bitcoin-mvrv-zscore)")
         st.markdown("""
             - **MVRV > 1:** The asset is potentially overvalued.
@@ -207,6 +207,9 @@ def get_footer_data():
         st.markdown("[Rugcheck](https://rugcheck.xyz)")
         st.markdown("[Token Sniffer](https://tokensniffer.com/)")
         st.markdown("[Sol Sniffer](https://www.solsniffer.com)")
+
+        st.success("EXACT Dates To Sell Your Bitcoin & Crypto")
+        st.markdown("[The EXACT Dates To Sell Your Bitcoin & Crypto (Best 2025 Guide) Ft. Raoul Pal](https://www.youtube.com/watch?v=QzY-WI1Edmg)")
 
     with otherCol:
         st.success("On-Chain Analysis")

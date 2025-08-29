@@ -4,7 +4,9 @@ import requests
 import urllib
 import pandas as pd
 from datetime import datetime
+from bs4 import BeautifulSoup
 from st_copy_to_clipboard import st_copy_to_clipboard
+import time
 
 cmc_api_key = 'fcf7ee51-af70-4614-821a-f253d1f0d7da'  # CoinMarketCap API key
 
@@ -30,7 +32,7 @@ def get_coin_data():
     params = {
         'vs_currency': 'usd',
         'order': 'market_cap_desc',
-        'per_page': 100,  # Number of coins to display
+        'per_page': 200,  # Number of coins to display
         'page': 1,
         'sparkline': 'false'
     }
@@ -318,3 +320,15 @@ def embedTradingViewChart(coin_symbol):
         <!-- TradingView Widget END -->
     """
     return html_code
+
+
+def coin_base_ranking():
+    u = "https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730"
+    t = BeautifulSoup(requests.get(u, headers={"User-Agent": "Mozilla/5.0"}).text, "html.parser").find("a", {
+        "class": "inline-list__item"}).get_text(strip=True)
+    st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
+
+
+def rainbowChart():
+    st.components.v1.iframe("https://charts.bitbo.io/rainbow/", height=800, scrolling=True)
+

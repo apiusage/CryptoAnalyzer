@@ -1,6 +1,7 @@
 # streamlit run main.py
 from PIL import Image
 from TA import *
+from FA import *
 from content import *
 
 img = Image.open("images/bitcoin.png").convert('RGB').save('images/bitcoin.jpeg')
@@ -25,6 +26,8 @@ def main():
     components.html(LOGO_BANNER)
     selected_coins = get_coin_table()
     getcontent(selected_coins)
+    coin_base_ranking()
+    rainbowChart()
     getfng()
     getsubcontent()
     get_footer_data()
