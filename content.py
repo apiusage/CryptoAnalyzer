@@ -308,10 +308,6 @@ def getsubcontent():
     with total3Col:
         components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3"), height=450)
 
-    # components.html("""
-    # <iframe src="https://banterbubbles.com/" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-    # """, height=800)
-
     colBubbles, colLiqHeatMap = st.columns(2)
     with colBubbles:
         components.html("""
@@ -379,6 +375,7 @@ def get_footer_data():
         st.markdown("[Bitcoin Addresses Network](https://www.theblock.co/data/on-chain-metrics/bitcoin)")
         st.markdown("[ALT / BTC Season](https://www.bitget.com/price/altcoin-season-index)")
         st.markdown("[Crypto Subreddit Stats](https://subredditstats.com/r/CryptoCurrency)")
+        st.markdown("[Banter Bubbles](https://banterbubbles.com/)")
 
     with youtubeCol:
         st.success("Socialblade Stats")
@@ -398,13 +395,4 @@ def get_footer_data():
         st.markdown("[Glassnode](https://studio.glassnode.com/charts/addresses.ActiveCount?a=BTC)")
         st.markdown("[Cryptoquant](https://cryptoquant.com/asset/btc/summary)")
         st.markdown("[Blockchain](https://www.blockchain.com/explorer/charts/n-transactions)")
-
-# def calculate_score(coin_symbol):
-#   return check_increased_trading_volume(coin_symbol)
-
-#def get_action(score):
-#    if score > 50:
-#        return "Entry"
-#    else:
-#       return "Exit"
 
