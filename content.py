@@ -4,112 +4,235 @@ import streamlit.components.v1 as components
 from TA import *
 from FA import *
 
+def sticky_scroll_to_top():
+    # Put a hidden anchor at the very top of the page
+    st.markdown("<a id='top'></a>", unsafe_allow_html=True)
+
+    # Floating button styled with CSS, links back to #top
+    st.markdown(
+        """
+        <style>
+        a#scrollTopBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 10px 16px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            background: #4CAF50;
+            color: white !important;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            user-select: none;
+            text-decoration: none;
+        }
+        a#scrollTopBtn:hover {
+            filter: brightness(1.1);
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        </style>
+
+        <a href="#top" id="scrollTopBtn">⬇️</a>
+        """,
+        unsafe_allow_html=True
+    )
+
+# -------------------------------
+# Helpers
+# -------------------------------
+@st.cache_data(ttl=300)
+def get_coin_data_cached():
+    data = get_coin_data()  # 🔹 Your existing API call
+    if not data or not isinstance(data, list):
+        raise ValueError("⚠️ Failed to fetch coin data. Please refresh.")
+    return data
+
+
+def deduplicate_coins(coins):
+    """Keep only the first coin per symbol (ignore duplicates)."""
+    seen = set()
+    unique = []
+    for coin in coins:
+        sym = coin.get("symbol", "").upper()
+        if sym not in seen:
+            seen.add(sym)
+            unique.append(coin)
+    return unique
+
+
+# -------------------------------
+# Table UI
+# -------------------------------
 def get_coin_table():
-    # Check if coin data is already fetched in session state
+    # ✅ Fetch with error handling
     if "coins_data" not in st.session_state:
-        st.session_state.coins_data = get_coin_data()
+        try:
+            raw_data = get_coin_data_cached()
+            st.session_state.coins_data = deduplicate_coins(raw_data)
+        except Exception as e:
+            st.error(f"❌ Could not load coins: {e}")
+            return []
 
-    coins_list = []
-    for coin in st.session_state.coins_data:
-        coins_list.append({
-            "Select": False,  # Initialize checkbox state as False
-            "Image": coin['image'] if isinstance(coin, dict) else None,
-            "Coin": coin['name'] if isinstance(coin, dict) else None,
-            "Symbol": coin['symbol'] if isinstance(coin, dict) else None,
-        })
-    df = pd.DataFrame(coins_list)
+    if not st.session_state.coins_data:
+        st.warning("⚠️ No coins available. Try refreshing.")
+        return []
 
-    # Initialize session state for checkbox values if not already initialized
-    if "checkbox_values" not in st.session_state:
-        st.session_state.checkbox_values = {index: False for index in range(len(df))}
+    # ✅ Initialize dataframe only once
+    if "coins_df" not in st.session_state:
+        coins_list = [
+            {
+                "Select": False,
+                "Rank": coin.get("market_cap_rank"),
+                "Image": coin.get("image"),
+                "Coin": coin.get("name"),
+                "Symbol": coin.get("symbol", "").upper(),
+            }
+            for coin in st.session_state.coins_data
+        ]
+        st.session_state.coins_df = pd.DataFrame(coins_list)
 
-    # Define column configuration for the DataFrame
+    # 👉 Display copy (sorted)
+    df_display = (
+        st.session_state.coins_df.sort_values(
+            by=["Select", "Rank"], ascending=[False, True]
+        ).reset_index(drop=True)
+    )
+
     column_config = {
         "Select": st.column_config.CheckboxColumn(disabled=False),
-        "Image": st.column_config.ImageColumn(),
-        "Coin": st.column_config.TextColumn(),
-        "Symbol": st.column_config.TextColumn(),
+        "Image": st.column_config.ImageColumn("Logo"),
+        "Coin": st.column_config.TextColumn("Coin"),
+        "Symbol": st.column_config.TextColumn("Symbol"),
     }
 
-    # Display the table with the image column and checkbox configured
-    edited_df = st.data_editor(df, use_container_width=True, column_config=column_config, hide_index=True)
+    homeCol1, homeCol2 = st.columns([2, 1])
 
-    # Update session state with checkbox values
-    for idx, row in edited_df.iterrows():
-        st.session_state.checkbox_values[idx] = row['Select']
+    with homeCol1:
+        edited_df = st.data_editor(
+            df_display,
+            use_container_width=True,
+            hide_index=True,
+            column_config=column_config,
+            key="coins_table",
+        )
 
-    if st.button('Select All'):
-        for idx in range(len(df)):
-            st.session_state.checkbox_values[idx] = True  # Select all checkboxes
+        # 🔥 Detect change in checkbox selection
+        if not edited_df["Select"].equals(
+            df_display["Select"]
+        ):
+            # Sync changes back
+            for sym, sel in zip(edited_df["Symbol"], edited_df["Select"]):
+                st.session_state.coins_df.loc[
+                    st.session_state.coins_df["Symbol"] == sym, "Select"
+                ] = sel
 
-    # Collect the selected coins (where checkbox is True)
-    selected_coins = [df['Symbol'][i] for i in range(len(df)) if st.session_state.checkbox_values[i]]
-    # st.write("Selected Coins:")
-    # st.write(selected_coins)
+            # 👉 Force rerun immediately so sort reflects
+            st.rerun()
+
+    # ✅ Get selected coins
+    selected_coins = st.session_state.coins_df.loc[
+        st.session_state.coins_df["Select"], "Symbol"
+    ].tolist()
+    st.session_state.selected_coins = selected_coins
+
+    with homeCol2:
+        st.write("### 🔎 Analyze with ChatGPT")
+        if selected_coins:
+            if st.button("Run GPT Analysis"):
+                gpt_prompt_copy("coins_gpt_prompt.txt", "{coin_list}", str(selected_coins))
+                st.write("### 🐦 Socials")
+                gpt_prompt_copy_msg(
+                    "Create a table to show numbers of followers in descending order based on follower count:",
+                    " crypto coins", str(selected_coins)
+                )
+        else:
+            st.info("👉 Select coins first.")
+
+    # ✅ Select/Deselect All
+    colA, colB = st.columns(2)
+    with colA:
+        if st.button("Select All"):
+            st.session_state.coins_df["Select"] = True
+            st.session_state.selected_coins = st.session_state.coins_df["Symbol"].tolist()
+            st.rerun()
+    with colB:
+        if st.button("Deselect All"):
+            st.session_state.coins_df["Select"] = False
+            st.session_state.selected_coins = []
+            st.rerun()
+
     return selected_coins
 
+
+# -------------------------------
+# Content / Analysis UI
+# -------------------------------
 def getcontent(selected_coins):
-    # Initialize expander states in session_state
-    if "expanders_state" not in st.session_state:
-        st.session_state.expanders_state = {}
+    if not selected_coins:
+        st.info("👉 Select coins and click Start Analysis.")
+        return
 
-    homeCol1, homeCol2 = st.columns(2)
-    with homeCol1:
-        if st.button("Start Analysis", type="primary"):
-            for coin in st.session_state.coins_data:
-                for coinSymbol in selected_coins:
-                    if coinSymbol.lower() == coin['symbol'].lower():
-                        expander_key = f"expander_{coin['name']}"
+    # ✅ Add session_state flag for button
+    if "start_analysis" not in st.session_state:
+        st.session_state.start_analysis = False
 
-                        # Set expander state dynamically based on session_state
-                        expanded = st.session_state.expanders_state.get(expander_key, False)
+    if st.button("🚀 Start Analysis", type="primary"):
+        st.session_state.start_analysis = True
 
-                        # Create expander with the saved state
-                        with st.expander(f"**{coin['symbol'].upper()}**", expanded=expanded):
-                            # Update expander state when user interacts
-                            st.session_state.expanders_state[expander_key] = True
+    if st.session_state.start_analysis:
+        for coin in st.session_state.coins_data:
+            if coin["symbol"].upper() not in selected_coins:
+                continue
 
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                get_google_trends(str(coin['name']) + " coin")
-                                get_technicals_stats(str(coin['symbol']))
-                                get_tokenomist_stats(str(coin['id']))
-                                st.image("images/redflag_token_distribution.jpg")
+            expander_key = f"expander_{coin['name']}"
 
-                                get_coin_creation_date(coin['id'])
-                            with col2:
-                                st.write("Fundamentals analysis")
-                                gpt_prompt_copy("individual_coin_gpt_prompt.txt", "{CoinName}", str(coin['name']))
+            with st.expander(f"**{coin['symbol'].upper()}**", expanded=False):
+                st.session_state[expander_key] = True
 
-                                st.write("Price prediction")
-                                gpt_prompt_copy_msg(
-                                    "Current price: " + str(coin['current_price']) + ". Give a worse and best scenario price prediction of ",
-                                    " crypto coin in months, years in table using market cap. Consider it always way below bitcoin/eth market cap, etc. ",
-                                    str(coin['name']))
+                col1, col2 = st.columns(2)
+                with col1:
+                    get_google_trends(coin["name"] + " coin")
+                    get_technicals_stats(coin["symbol"])
+                    get_tokenomist_stats(coin["id"])
+                    st.image("images/redflag_token_distribution.jpg")
+                    get_coin_creation_date(coin["id"])
 
-                            classify_market_cap(coin['market_cap'])
+                with col2:
+                    st.write("### Fundamentals")
+                    gpt_prompt_copy("individual_coin_gpt_prompt.txt", "{CoinName}", coin["name"])
 
-                            a, b = st.columns(2)
-                            c, d = st.columns(2)
-                            a.metric("Market Cap Rank", coin["market_cap_rank"], "", border=True)
-                            b.metric("Price Change (24h)", f"{coin['price_change_24h']:.2f} USD",
-                                     f"{coin['price_change_percentage_24h']:.2f}%", border=True)
-                            c.metric("ATH Change %", f"{coin['ath_change_percentage']:.2f}%", "", border=True)
-                            d.metric("ATL Change %", f"{coin['atl_change_percentage']:.2f}%", "", border=True)
+                    st.write("### Price Prediction")
+                    gpt_prompt_copy_msg(
+                        f"Current price: {coin['current_price']}. "
+                        "Give a worse and best scenario price prediction of ",
+                        " crypto coin in months, years in table using market cap. "
+                        "Consider it always way below bitcoin/eth market cap, etc. ",
+                        coin["name"]
+                    )
 
-                            check_increased_trading_volume(str(coin['id'].lower()))
-                            calculate_vol_mcap_ratio(coin['market_cap'], coin['total_volume'])
-                            fdv_vs_market_cap(coin['fully_diluted_valuation'], coin['market_cap'])
-                            circulating_supply_vs_total_supply(coin['circulating_supply'], coin['total_supply'])
-                            price_vs_ath(coin['current_price'], coin['ath'])
-                            price_vs_atl(coin['current_price'], coin['atl'])
-                            liquidity_to_supply_ratio(coin['total_volume'], coin['circulating_supply'])
-    with homeCol2:
-        st.write("Analyze coins using chatgpt")
-        gpt_prompt_copy("coins_gpt_prompt.txt", "{coin_list}", str(selected_coins))
+                classify_market_cap(coin["market_cap"])
 
-        st.write("Create table to show X account followers count")
-        gpt_prompt_copy_msg("Create a table to show numbers of followers in descending order based on the follower count:", " crypto coins", str(selected_coins))
+                a, b = st.columns(2)
+                c, d = st.columns(2)
+                a.metric("Market Cap Rank", coin["market_cap_rank"], "", border=True)
+                b.metric("Price Change (24h)", f"{coin['price_change_24h']:.2f} USD",
+                         f"{coin['price_change_percentage_24h']:.2f}%", border=True)
+                c.metric("ATH Change %", f"{coin['ath_change_percentage']:.2f}%", "", border=True)
+                d.metric("ATL Change %", f"{coin['atl_change_percentage']:.2f}%", "", border=True)
+
+                # Extra analytics
+                check_increased_trading_volume(coin["id"].lower())
+                calculate_vol_mcap_ratio(coin["market_cap"], coin["total_volume"])
+                fdv_vs_market_cap(coin["fully_diluted_valuation"], coin["market_cap"])
+                circulating_supply_vs_total_supply(coin["circulating_supply"], coin["total_supply"])
+                price_vs_ath(coin["current_price"], coin["ath"])
+                price_vs_atl(coin["current_price"], coin["atl"])
+                liquidity_to_supply_ratio(coin["total_volume"], coin["circulating_supply"])
+
 
 def getfng():
     # Fear and Greed Meter
