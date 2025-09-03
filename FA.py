@@ -322,13 +322,4 @@ def embedTradingViewChart(coin_symbol):
     return html_code
 
 
-def coin_base_ranking():
-    u = "https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730"
-    t = BeautifulSoup(requests.get(u, headers={"User-Agent": "Mozilla/5.0"}).text, "html.parser").find("a", {
-        "class": "inline-list__item"}).get_text(strip=True)
-    st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
-
-
-def rainbowChart():
-    st.components.v1.iframe("https://charts.bitbo.io/rainbow/", height=800, scrolling=True)
 

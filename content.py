@@ -258,12 +258,41 @@ def getfng():
                     - **76-100**: Extreme Greed / Euphoria (Bubble territory, extreme caution advised).
                     """)
 
-    components.html("""
-    <iframe src="https://www.coinglass.com/pro/i/RsiHeatMap" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
-    """, height=800)
+        u = "https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730"
+        t = BeautifulSoup(requests.get(u, headers={"User-Agent": "Mozilla/5.0"}).text, "html.parser").find("a", {
+            "class": "inline-list__item"}).get_text(strip=True)
+        st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
 
 
 def getsubcontent():
+    components.html("""
+    <iframe src="https://www.coinglass.com/bull-market-peak-signals" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+    """, height=800)
+
+    colCDRI, colRSI = st.columns(2)
+    with colCDRI:
+        components.html("""
+        <iframe src="https://www.coinglass.com/pro/i/CDRI" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
+
+    with colRSI:
+        components.html("""
+        <iframe src="https://www.coinglass.com/pro/i/RsiHeatMap" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
+
+    colBTCBal, colSpot = st.columns(2)
+    with colBTCBal:
+        components.html(
+            '<iframe src="https://www.coinglass.com/Balance" '
+            'width="100%" height="2000" style="border:none;" scrolling="yes"></iframe>',
+            height=2000
+        )
+
+    with colSpot:
+        components.html("""
+        <iframe src="https://www.coinglass.com/spot-inflow-outflow" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
+        """, height=2000)
+
     st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders and investors moving funds out of volatile assets (like BTC, ETH, altcoins) into stablecoins.")
     colUSDT, colUSDC = st.columns(2)
     with colUSDT:
@@ -279,17 +308,45 @@ def getsubcontent():
     with total3Col:
         components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3"), height=450)
 
-    components.html("""
-    <iframe src="https://cryptobubbles.net" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-    """, height=800)
-
     # components.html("""
     # <iframe src="https://banterbubbles.com/" width=100% height="800px" style="border: none" loading="lazy"></iframe>
     # """, height=800)
 
-    components.html("""
-    <iframe src="https://www.coinglass.com/pro/futures/LiquidationHeatMap" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-    """, height=800)
+    colBubbles, colLiqHeatMap = st.columns(2)
+    with colBubbles:
+        components.html("""
+        <iframe src="https://cryptobubbles.net" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
+
+    with colLiqHeatMap:
+        components.html("""
+        <iframe src="https://www.coinglass.com/pro/futures/LiquidationHeatMap" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
+
+    colMaxPain, colLiqMaxPain = st.columns(2)
+    with colMaxPain:
+        components.html("""
+        <iframe src="https://www.coinglass.com/pro/options/max-pain" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
+
+    with colLiqMaxPain:
+        components.html("""
+        <iframe src="https://www.coinglass.com/liquidation-maxpain" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
+
+    colInOutFlow, colWhaleAlert = st.columns(2)
+    with colInOutFlow:
+        components.html("""
+        <iframe src="https://www.coinglass.com/InflowAndOutflow" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
+
+    with colWhaleAlert:
+        components.html("""
+        <iframe src="https://www.coinglass.com/whale-alert" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
+
+    st.components.v1.iframe("https://charts.bitbo.io/rainbow/", height=800, scrolling=True)
+    st.components.v1.iframe("https://www.coinglass.com/pro/i/micro-strategy-cost", height=800, scrolling=True)
 
 
 def get_footer_data():
@@ -319,6 +376,7 @@ def get_footer_data():
             - 🔴 Extremely High: MVRV has been Above 2.4 for around 6% of trading days.
             """)
         st.markdown("[Bitcoin Address Count](https://studio.glassnode.com/charts/addresses.NewNonZeroCount)")
+        st.markdown("[Bitcoin Addresses Network](https://www.theblock.co/data/on-chain-metrics/bitcoin)")
         st.markdown("[ALT / BTC Season](https://www.bitget.com/price/altcoin-season-index)")
         st.markdown("[Crypto Subreddit Stats](https://subredditstats.com/r/CryptoCurrency)")
 
