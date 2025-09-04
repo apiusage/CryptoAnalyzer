@@ -305,7 +305,6 @@ def get_investing_data():
         components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3"), height=450)
 
     st.components.v1.iframe("https://charts.bitbo.io/rainbow/", height=800, scrolling=True)
-    st.components.v1.iframe("https://dropstab.com/tab/8kwolcb86m?slug=8kwolcb86m", height=800, scrolling=True)
 
 
 def get_trading_data():
@@ -380,6 +379,7 @@ def get_footer_data():
         st.success("🔍 Analytics Platforms")
         st.markdown("[Glassnode](https://studio.glassnode.com/home)")
         st.markdown("[CryptoQuant](https://cryptoquant.com/asset/btc/summary)")
+        st.markdown("[Cryptoprediction](https://cryptoprediction.io/)")
         st.markdown("[Santiment](https://app.santiment.net/)")
         st.markdown("[Nansen](https://app.nansen.ai/)")
         st.markdown("[Laevitas](https://app.laevitas.ch/assets/home)")
@@ -428,6 +428,5 @@ def get_footer_data():
         st.markdown("[FOMC Rate Moves](https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.htmlwatch-tool.html)")
         st.markdown("[The Block Data](https://www.theblock.co/data/on-chain-metrics/bitcoin)")
         st.markdown("[Fred Economic Data](https://fred.stlouisfed.org/)")
-        st.markdown("[Dropstab](https://dropstab.com/)")
         st.markdown("[Newhedge](https://newhedge.io/bitcoin)")
 
