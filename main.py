@@ -68,7 +68,7 @@ def main():
     # Show blended menu
     selected = option_menu(
         menu_title=None,
-        options=["Home", "Coin Analyzer"],
+        options=["Investing", "Trading", "Coin Analyzer"],
         icons=['house', 'reception-4'],
         menu_icon="cast",
         default_index=0,
@@ -76,11 +76,13 @@ def main():
     )
 
     # Content area
-    if selected == "Home":
+    if selected == "Investing":
         getfng()
-        getsubcontent()
+        get_investing_data()
         get_footer_data()
         sticky_scroll_to_top()
+    elif selected == "Trading":
+        get_trading_data()
     elif selected == "Coin Analyzer":
         selected_coins = get_coin_table()
         getcontent(selected_coins)

@@ -264,10 +264,19 @@ def getfng():
         st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
 
 
-def getsubcontent():
-    components.html("""
-    <iframe src="https://www.coinglass.com/bull-market-peak-signals" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-    """, height=800)
+def get_investing_data():
+    colBull, colBTCBal = st.columns(2)
+    with colBull:
+        components.html("""
+        <iframe src="https://www.coinglass.com/bull-market-peak-signals" width=100% height="2000px" style="border: none" loading="lazy"></iframe>
+        """, height=2000)
+
+    with colBTCBal:
+        components.html(
+            '<iframe src="https://www.coinglass.com/Balance" '
+            'width="100%" height="2000" style="border:none;" scrolling="yes"></iframe>',
+            height=2000
+        )
 
     colCDRI, colRSI = st.columns(2)
     with colCDRI:
@@ -279,19 +288,6 @@ def getsubcontent():
         components.html("""
         <iframe src="https://www.coinglass.com/pro/i/RsiHeatMap" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
         """, height=800)
-
-    colBTCBal, colSpot = st.columns(2)
-    with colBTCBal:
-        components.html(
-            '<iframe src="https://www.coinglass.com/Balance" '
-            'width="100%" height="2000" style="border:none;" scrolling="yes"></iframe>',
-            height=2000
-        )
-
-    with colSpot:
-        components.html("""
-        <iframe src="https://www.coinglass.com/spot-inflow-outflow" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
-        """, height=2000)
 
     st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders and investors moving funds out of volatile assets (like BTC, ETH, altcoins) into stablecoins.")
     colUSDT, colUSDC = st.columns(2)
@@ -307,6 +303,22 @@ def getsubcontent():
         components.html(embedTradingViewChart("CRYPTOCAP:TOTAL2"), height=450)
     with total3Col:
         components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3"), height=450)
+
+    st.components.v1.iframe("https://charts.bitbo.io/rainbow/", height=800, scrolling=True)
+    st.components.v1.iframe("https://dropstab.com/tab/8kwolcb86m?slug=8kwolcb86m", height=800, scrolling=True)
+
+
+def get_trading_data():
+    colInOutFlow, colWhaleAlert = st.columns(2)
+    with colInOutFlow:
+        components.html("""
+        <iframe src="https://www.coinglass.com/InflowAndOutflow" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
+
+    with colWhaleAlert:
+        components.html("""
+        <iframe src="https://www.coinglass.com/whale-alert" width=100% height="800px" style="border: none" loading="lazy"></iframe>
+        """, height=800)
 
     colBubbles, colLiqHeatMap = st.columns(2)
     with colBubbles:
@@ -330,69 +342,92 @@ def getsubcontent():
         <iframe src="https://www.coinglass.com/liquidation-maxpain" width=100% height="800px" style="border: none" loading="lazy"></iframe>
         """, height=800)
 
-    colInOutFlow, colWhaleAlert = st.columns(2)
-    with colInOutFlow:
-        components.html("""
-        <iframe src="https://www.coinglass.com/InflowAndOutflow" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
-    with colWhaleAlert:
-        components.html("""
-        <iframe src="https://www.coinglass.com/whale-alert" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
-    st.components.v1.iframe("https://charts.bitbo.io/rainbow/", height=800, scrolling=True)
-    st.components.v1.iframe("https://www.coinglass.com/pro/i/micro-strategy-cost", height=800, scrolling=True)
+    components.html("""
+          <iframe src="https://www.coinglass.com/spot-inflow-outflow" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
+          """, height=2000)
 
 
 def get_footer_data():
-    # DXY
-    st.success("DXY (U.S. Dollar Index)")
-    st.markdown("[View DXY TradingView](https://www.tradingview.com/chart/?symbol=TVC%3ADXY)")
-    st.write("DXY up = U.S. Dollar is strengthening relative to these other currencies (crypto, stocks..) ")
+    # =============================
+    # COLUMN 1 - Macro & On-Chain
+    # =============================
+    col1, col2, col3 = st.columns(3)
 
-    # M2 Liquidity Index
-    st.success("M2 Global Liquidity Index")
-    st.markdown("[View M2 Global Liquidity Index on TradingView](https://www.tradingview.com/script/6JlXCXmW-M2-Global-Liquidity-Index/)")
-    st.write("Higher M2 levels = more liquidity")
+    with col1:
+        st.success("🌍 Check Accumulation Phase")
+        st.markdown("[Dropstab](https://dropstab.com/tab/8kwolcb86m?slug=8kwolcb86m)")
 
-    statsCol, youtubeCol, otherCol = st.columns(3)
-    with statsCol:
-        st.success("Links")
-        st.markdown("[FOMC Rate Moves](https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.htmlwatch-tool.html)")
+        st.success("🌍 Macro Indicators")
+        st.markdown("[DXY (U.S. Dollar Index)](https://www.tradingview.com/chart/?symbol=TVC%3ADXY)")
+        st.write("📈 DXY up = U.S. Dollar strengthening vs crypto & stocks")
+        st.markdown("[M2 Global Liquidity Index](https://www.tradingview.com/script/6JlXCXmW-M2-Global-Liquidity-Index/)")
+        st.write("💧 Higher M2 = more liquidity")
+
+        st.success("📊 On-Chain Indicators")
         st.markdown("[Pi Cycle Top Indicator](https://charts.bitbo.io/pi-cycle-top/)")
-        st.markdown("[MVRV Z - Score](https://www.coinglass.com/pro/i/bitcoin-mvrv-zscore)")
-        st.markdown("""
-            - **MVRV > 1:** The asset is potentially overvalued.
-            - **MVRV < 1:** The asset is potentially undervalued, could suggest a bottom or buying opportunity.
-            - **MVRV = 1:** The asset is close to its fair value.
-            - 🔵 Extreme Lows: MVRV has been Below 0.8 for around 5% of trading days.
-            - 🟢 Getting Low: MVRV has been Below 1.0 for around 15% of trading days.
-            - 🟠 Getting High: MVRV has been Above 2.4 for around 20% of trading days.
-            - 🔴 Extremely High: MVRV has been Above 2.4 for around 6% of trading days.
-            """)
+        st.markdown("[MVRV Z-Score](https://www.coinglass.com/pro/i/bitcoin-mvrv-zscore)")
+        st.markdown("[Mayer Multiple](https://charts.bitbo.io/mayermultiple/)")
         st.markdown("[Bitcoin Address Count](https://studio.glassnode.com/charts/addresses.NewNonZeroCount)")
-        st.markdown("[Bitcoin Addresses Network](https://www.theblock.co/data/on-chain-metrics/bitcoin)")
-        st.markdown("[ALT / BTC Season](https://www.bitget.com/price/altcoin-season-index)")
-        st.markdown("[Crypto Subreddit Stats](https://subredditstats.com/r/CryptoCurrency)")
-        st.markdown("[Banter Bubbles](https://banterbubbles.com/)")
+        st.markdown("[Bitcoin Active Addresses](https://www.bitcoinmagazinepro.com/charts/bitcoin-active-addresses/)")
+        st.markdown("[Rainbow Chart](https://www.blockchaincenter.net/en/bitcoin-rainbow-chart/)")
+        st.markdown("[Stock-to-Flow Model](https://www.bitcoinmagazinepro.com/charts/stock-to-flow-model/)")
+        st.markdown("[Altcoin Season Index](https://www.bitget.com/price/altcoin-season-index)")
 
-    with youtubeCol:
-        st.success("Socialblade Stats")
-        st.markdown("[InvestAnswers](https://socialblade.com/youtube/channel/UClgJyzwGs-GyaNxUHcLZrkg)")
+    # =============================
+    # COLUMN 2 - Analytics & Security
+    # =============================
+    with col2:
+        st.success("🔍 Analytics Platforms")
+        st.markdown("[Glassnode](https://studio.glassnode.com/home)")
+        st.markdown("[CryptoQuant](https://cryptoquant.com/asset/btc/summary)")
+        st.markdown("[Santiment](https://app.santiment.net/)")
+        st.markdown("[Nansen](https://app.nansen.ai/)")
+        st.markdown("[Laevitas](https://app.laevitas.ch/assets/home)")
+        st.markdown("[Messari](https://messari.io/)")
+        st.markdown("[DefiLlama](https://defillama.com/)")
+        st.markdown("[Dune Analytics](https://dune.com/hildobby/btc-etfs)")
+        st.markdown("[Lunarcrush](https://lunarcrush.com/categories/cryptocurrencies)")
+        st.markdown("[CryptoSlate](https://cryptoslate.com/coins/)")
+        st.markdown("[CryptoRank](https://cryptorank.io/)")
+        st.markdown("[Tokenomist](https://tokenomist.ai/)")
+        st.markdown("[OnChainFX](https://onchainfx.com/)")
+        st.markdown("[CoinCheckup](https://coincheckup.com/)")
+        st.markdown("[Coinalyze](https://coinalyze.net/)")
+        st.markdown("[CoinRanking](https://coinranking.com/)")
+        st.markdown("[SosoValue](https://sosovalue.com/)")
+        st.markdown("[LookOnChain](https://www.lookonchain.com/index.aspx)")
+        st.markdown("[Coinscan](https://www.coinscan.com/)")
+        st.markdown("[DeveloperReport](https://www.developerreport.com/)")
 
-        st.success("Rugpull / Honeypot")
+        st.success("⚠️ Rugpull / Scam Detection")
         st.markdown("[Rugcheck](https://rugcheck.xyz)")
         st.markdown("[Token Sniffer](https://tokensniffer.com/)")
         st.markdown("[Sol Sniffer](https://www.solsniffer.com)")
 
-        st.success("EXACT Dates To Sell Your Bitcoin & Crypto")
-        st.markdown("[The EXACT Dates To Sell Your Bitcoin & Crypto (Best 2025 Guide) Ft. Raoul Pal](https://www.youtube.com/watch?v=QzY-WI1Edmg)")
+    # =============================
+    # COLUMN 3 - Explorers, Sentiment & Media
+    # =============================
+    with col3:
+        st.success("🌐 Blockchain Explorers")
+        st.markdown("[Etherscan](https://etherscan.io/)")
+        st.markdown("[BSCScan](https://bscscan.com/)")
+        st.markdown("[Solscan](https://solscan.io/)")
+        st.markdown("[DEX Screener](https://dexscreener.com/)")
 
-    with otherCol:
-        st.success("On-Chain Analysis")
-        st.markdown("[Coinglass](https://www.coinglass.com/pro/i/pi-cycle-top-indicator)")
-        st.markdown("[Glassnode](https://studio.glassnode.com/charts/addresses.ActiveCount?a=BTC)")
-        st.markdown("[Cryptoquant](https://cryptoquant.com/asset/btc/summary)")
-        st.markdown("[Blockchain](https://www.blockchain.com/explorer/charts/n-transactions)")
+        st.success("📢 Sentiment & Community")
+        st.markdown("[Fear & Greed Index](https://edition.cnn.com/markets/fear-and-greed)")
+        st.markdown("[Crypto Subreddit Stats](https://subredditstats.com/r/CryptoCurrency)")
+        st.markdown("[Banter Bubbles](https://banterbubbles.com/)")
+        st.markdown("[SwaggyStocks (WSB)](https://swaggystocks.com/dashboard/wallstreetbets/realtime)")
+
+        st.success("🎥 Media & Social Stats")
+        st.markdown("[InvestAnswers (Socialblade)](https://socialblade.com/youtube/channel/UClgJyzwGs-GyaNxUHcLZrkg)")
+        st.markdown("[The EXACT Dates To Sell Bitcoin (Raoul Pal)](https://www.youtube.com/watch?v=QzY-WI1Edmg)")
+
+        st.success("📚 Other Resources")
+        st.markdown("[FOMC Rate Moves](https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.htmlwatch-tool.html)")
+        st.markdown("[The Block Data](https://www.theblock.co/data/on-chain-metrics/bitcoin)")
+        st.markdown("[Fred Economic Data](https://fred.stlouisfed.org/)")
+        st.markdown("[Dropstab](https://dropstab.com/)")
+        st.markdown("[Newhedge](https://newhedge.io/bitcoin)")
 
