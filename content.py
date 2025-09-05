@@ -1,6 +1,7 @@
 import streamlit.components.v1 as components
 from TA import *
 from FA import *
+from bs4 import BeautifulSoup
 
 def sticky_scroll_to_top():
     # Put a hidden anchor at the very top of the page
@@ -218,10 +219,10 @@ def getfng():
                     - **76-100**: Extreme Greed / Euphoria (Bubble territory, extreme caution advised).
                     """)
 
-        u = "https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730"
-        t = BeautifulSoup(requests.get(u, headers={"User-Agent": "Mozilla/5.0"}).text, "html.parser").find("a", {
+    u = "https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730"
+    t = BeautifulSoup(requests.get(u, headers={"User-Agent": "Mozilla/5.0"}).text, "html.parser").find("a", {
             "class": "inline-list__item"}).get_text(strip=True)
-        st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
 
 def show_iframes(pairs=None, singles=None):
     if singles:
