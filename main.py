@@ -28,7 +28,7 @@ def main():
     selected = option_menu(
         menu_title=None,
         options=["Investing", "Trading", "Coin Analyzer"],
-        icons=['house', 'reception-4'],
+        icons=["graph-up-arrow", "bar-chart", "coin"],  # ✅ Bootstrap icons
         menu_icon="cast",
         default_index=0,
         orientation="horizontal"
