@@ -42,7 +42,7 @@ def main():
     elif selected == "Trading":
         get_trading_data()
     elif selected == "Coin Analyzer":
-        selected_coins = get_coin_table()
+        selected_coins = get_coin_table()  # single unique key
         getcontent(selected_coins)
 
 if __name__ == "__main__":

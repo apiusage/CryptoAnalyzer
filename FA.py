@@ -25,6 +25,7 @@ def gpt_prompt_copy_msg(prefixMsg, suffixMsg, coin_list):
     st_copy_to_clipboard(str(prefixMsg) + str(coin_list) + str(suffixMsg))
 
 # https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false
+@st.cache_data(show_spinner=False)
 def get_coin_data():
     url = "https://api.coingecko.com/api/v3/coins/markets"
     params = {
@@ -36,6 +37,21 @@ def get_coin_data():
     }
     response = requests.get(url, params=params)
     return response.json()
+
+
+@st.cache_data(show_spinner=False)
+def get_coin_categories():
+    url = "https://api.coingecko.com/api/v3/coins/categories"
+    response = requests.get(url)
+    categories = response.json()
+
+    coin_to_categories = {}
+    for cat in categories:
+        name = cat.get("name")
+        top_ids = cat.get("top_3_coins_id", [])
+        for coin_id in top_ids:
+            coin_to_categories.setdefault(coin_id, []).append(name)
+    return coin_to_categories
 
 def get_coin_creation_date(coin_id):
     url = f"https://api.coingecko.com/api/v3/coins/{coin_id}"

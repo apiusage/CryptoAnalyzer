@@ -33,7 +33,7 @@ def deduplicate_coins(coins):
     return unique
 
 def get_coin_table():
-    # ✅ Fetch with error handling
+    # ✅ Fetch coin data
     if "coins_data" not in st.session_state:
         try:
             raw_data = get_coin_data_cached()
@@ -46,91 +46,115 @@ def get_coin_table():
         st.warning("⚠️ No coins available. Try refreshing.")
         return []
 
+    # ✅ Fetch categories mapping
+    coin_to_categories = get_coin_categories()
+
     # ✅ Initialize dataframe only once
     if "coins_df" not in st.session_state:
-        coins_list = [
-            {
+        coins_list = []
+        for coin in st.session_state.coins_data:
+            coin_id = coin.get("id")
+            categories = coin_to_categories.get(coin_id, [])
+            coins_list.append({
                 "Select": False,
                 "Rank": coin.get("market_cap_rank"),
                 "Image": coin.get("image"),
                 "Coin": coin.get("name"),
                 "Symbol": coin.get("symbol", "").upper(),
-            }
-            for coin in st.session_state.coins_data
-        ]
+                "Category": ", ".join(categories) if categories else "N/A"
+            })
+
         st.session_state.coins_df = pd.DataFrame(coins_list)
 
-    # 👉 Display copy (sorted)
-    df_display = (
-        st.session_state.coins_df.sort_values(
-            by=["Select", "Rank"], ascending=[False, True]
-        ).reset_index(drop=True)
-    )
+        # Fill missing ranks with max+1
+        st.session_state.coins_df["Rank"] = st.session_state.coins_df["Rank"].fillna(
+            st.session_state.coins_df["Rank"].max() + 1
+        )
 
     column_config = {
         "Select": st.column_config.CheckboxColumn(disabled=False),
         "Image": st.column_config.ImageColumn("Logo"),
         "Coin": st.column_config.TextColumn("Coin"),
         "Symbol": st.column_config.TextColumn("Symbol"),
+        "Category": st.column_config.TextColumn("Category"),
     }
 
-    homeCol1, homeCol2 = st.columns([2, 1])
+    col1, col2 = st.columns([2, 1])
 
-    with homeCol1:
+    with col1:
+        # --- Separate selected and unselected coins ---
+        df_selected = st.session_state.coins_df[
+            st.session_state.coins_df["Select"]
+        ].sort_values("Rank")
+
+        df_others = st.session_state.coins_df[
+            ~st.session_state.coins_df["Select"]
+        ].sort_values("Rank")
+
+        # Combine selected on top, unselected below
+        df_display = pd.concat([df_selected, df_others]).reset_index(drop=True)
+
+        # --- Render editable table ---
         edited_df = st.data_editor(
             df_display,
             use_container_width=True,
             hide_index=True,
             column_config=column_config,
-            key="coins_table",
+            key="coins_table_editor"
         )
 
-        # 🔥 Detect change in checkbox selection
-        if not edited_df["Select"].equals(
-            df_display["Select"]
-        ):
-            # Sync changes back
-            for sym, sel in zip(edited_df["Symbol"], edited_df["Select"]):
+        # --- Detect changes and update session state ---
+        changed = False
+        for sym, sel in zip(edited_df["Symbol"], edited_df["Select"]):
+            prev_sel = st.session_state.coins_df.loc[
+                st.session_state.coins_df["Symbol"] == sym, "Select"
+            ].iloc[0]
+
+            if sel != prev_sel:
                 st.session_state.coins_df.loc[
                     st.session_state.coins_df["Symbol"] == sym, "Select"
                 ] = sel
+                changed = True
 
-            # 👉 Force rerun immediately so sort reflects
+        # Only rerun if a checkbox actually changed
+        if changed:
             st.rerun()
 
-    # ✅ Get selected coins
-    selected_coins = st.session_state.coins_df.loc[
-        st.session_state.coins_df["Select"], "Symbol"
-    ].tolist()
-    st.session_state.selected_coins = selected_coins
+        # ✅ Selected coins
+        selected_coins = st.session_state.coins_df.loc[
+            st.session_state.coins_df["Select"], "Symbol"
+        ].tolist()
+        st.session_state.selected_coins = selected_coins
 
-    with homeCol2:
+    with col2:
         st.write("### 🔎 Analyze with ChatGPT")
         if selected_coins:
             if st.button("Run GPT Analysis"):
                 gpt_prompt_copy("coins_gpt_prompt.txt", "{coin_list}", str(selected_coins))
-                st.write("### 🐦 Socials")
-                gpt_prompt_copy_msg(
-                    "Create a table to show numbers of followers in descending order based on follower count:",
-                    " crypto coins", str(selected_coins)
-                )
+
+            st.write("### 🐦 Socials")
+            gpt_prompt_copy_msg(
+                "Create a table to show numbers of followers in descending order based on follower count:",
+                " crypto coins",
+                str(selected_coins),
+            )
         else:
             st.info("👉 Select coins first.")
 
-    # ✅ Select/Deselect All
-    colA, colB, _ = st.columns([1, 1, 15])  # left, right, spacer
+    # Select/Deselect all
+    colA, colB = st.columns([0.3, 1])
     with colA:
         if st.button("Select All"):
             st.session_state.coins_df["Select"] = True
-            st.session_state.selected_coins = st.session_state.coins_df["Symbol"].tolist()
             st.rerun()
+
     with colB:
         if st.button("Deselect All"):
             st.session_state.coins_df["Select"] = False
-            st.session_state.selected_coins = []
             st.rerun()
 
     return selected_coins
+
 
 def getcontent(selected_coins):
     if not selected_coins:
