@@ -4,9 +4,7 @@ import requests
 import urllib
 import pandas as pd
 from datetime import datetime
-from bs4 import BeautifulSoup
 from st_copy_to_clipboard import st_copy_to_clipboard
-import time
 
 cmc_api_key = 'fcf7ee51-af70-4614-821a-f253d1f0d7da'  # CoinMarketCap API key
 

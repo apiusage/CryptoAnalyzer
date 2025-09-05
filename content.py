@@ -1,5 +1,3 @@
-import streamlit as st
-import pandas as pd
 import streamlit.components.v1 as components
 from TA import *
 from FA import *
@@ -8,49 +6,19 @@ def sticky_scroll_to_top():
     # Put a hidden anchor at the very top of the page
     st.markdown("<a id='top'></a>", unsafe_allow_html=True)
 
-    # Floating button styled with CSS, links back to #top
-    st.markdown(
-        """
-        <style>
-        a#scrollTopBtn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-            padding: 10px 16px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 10px;
-            background: #4CAF50;
-            color: white !important;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            user-select: none;
-            text-decoration: none;
-        }
-        a#scrollTopBtn:hover {
-            filter: brightness(1.1);
-        }
-        html {
-            scroll-behavior: smooth;
-        }
-        </style>
+    # Load external CSS
+    with open("style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-        <a href="#top" id="scrollTopBtn">⬇️</a>
-        """,
-        unsafe_allow_html=True
-    )
+    # Button HTML (kept inline)
+    st.markdown('<a href="#top" id="scrollTopBtn">⬆️</a>', unsafe_allow_html=True)
 
-# -------------------------------
-# Helpers
-# -------------------------------
 @st.cache_data(ttl=300)
 def get_coin_data_cached():
     data = get_coin_data()  # 🔹 Your existing API call
     if not data or not isinstance(data, list):
         raise ValueError("⚠️ Failed to fetch coin data. Please refresh.")
     return data
-
 
 def deduplicate_coins(coins):
     """Keep only the first coin per symbol (ignore duplicates)."""
@@ -63,10 +31,6 @@ def deduplicate_coins(coins):
             unique.append(coin)
     return unique
 
-
-# -------------------------------
-# Table UI
-# -------------------------------
 def get_coin_table():
     # ✅ Fetch with error handling
     if "coins_data" not in st.session_state:
@@ -153,7 +117,7 @@ def get_coin_table():
             st.info("👉 Select coins first.")
 
     # ✅ Select/Deselect All
-    colA, colB = st.columns(2)
+    colA, colB, _ = st.columns([1, 1, 15])  # left, right, spacer
     with colA:
         if st.button("Select All"):
             st.session_state.coins_df["Select"] = True
@@ -167,10 +131,6 @@ def get_coin_table():
 
     return selected_coins
 
-
-# -------------------------------
-# Content / Analysis UI
-# -------------------------------
 def getcontent(selected_coins):
     if not selected_coins:
         st.info("👉 Select coins and click Start Analysis.")
@@ -263,32 +223,31 @@ def getfng():
             "class": "inline-list__item"}).get_text(strip=True)
         st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
 
+def show_iframes(pairs=None, singles=None):
+    if singles:
+        # if user passed a string → wrap in list
+        if isinstance(singles, str):
+            singles = [(singles, 2000)]
+        for url, h in singles:
+            components.html(f'<iframe src="{url}" width=100% height="{h}" style="border:none" loading="lazy"></iframe>', height=h)
+    if pairs:
+        for l, r in pairs:
+            c1, c2 = st.columns(2)
+            with c1:
+                components.html(f'<iframe src="{l}" width=100% height="800px" style="border:none" loading="lazy"></iframe>', height=800)
+            with c2:
+                components.html(f'<iframe src="{r}" width=100% height="800px" style="border:none" loading="lazy"></iframe>', height=800)
 
 def get_investing_data():
-    colBull, colBTCBal = st.columns(2)
-    with colBull:
-        components.html("""
-        <iframe src="https://www.coinglass.com/bull-market-peak-signals" width=100% height="2000px" style="border: none" loading="lazy"></iframe>
-        """, height=2000)
+    singles = [
+        ("https://www.coinglass.com/bull-market-peak-signals", 2000),
+        ("https://www.coinglass.com/Balance", 2000),
+    ]
+    pairs = [
+        ("https://www.coinglass.com/pro/i/CDRI", "https://www.coinglass.com/pro/i/RsiHeatMap"),
+    ]
 
-    with colBTCBal:
-        components.html(
-            '<iframe src="https://www.coinglass.com/Balance" '
-            'width="100%" height="2000" style="border:none;" scrolling="yes"></iframe>',
-            height=2000
-        )
-
-    colCDRI, colRSI = st.columns(2)
-    with colCDRI:
-        components.html("""
-        <iframe src="https://www.coinglass.com/pro/i/CDRI" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
-    with colRSI:
-        components.html("""
-        <iframe src="https://www.coinglass.com/pro/i/RsiHeatMap" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
+    show_iframes(pairs, singles)
     st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders and investors moving funds out of volatile assets (like BTC, ETH, altcoins) into stablecoins.")
     colUSDT, colUSDC = st.columns(2)
     with colUSDT:
@@ -306,44 +265,13 @@ def get_investing_data():
 
     st.components.v1.iframe("https://charts.bitbo.io/rainbow/", height=800, scrolling=True)
 
-
 def get_trading_data():
-    colInOutFlow, colWhaleAlert = st.columns(2)
-    with colInOutFlow:
-        components.html("""
-        <iframe src="https://www.coinglass.com/InflowAndOutflow" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
-    with colWhaleAlert:
-        components.html("""
-        <iframe src="https://www.coinglass.com/whale-alert" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
-    colBubbles, colLiqHeatMap = st.columns(2)
-    with colBubbles:
-        components.html("""
-        <iframe src="https://cryptobubbles.net" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
-    with colLiqHeatMap:
-        components.html("""
-        <iframe src="https://www.coinglass.com/pro/futures/LiquidationHeatMap" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
-    colMaxPain, colLiqMaxPain = st.columns(2)
-    with colMaxPain:
-        components.html("""
-        <iframe src="https://www.coinglass.com/pro/options/max-pain" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
-    with colLiqMaxPain:
-        components.html("""
-        <iframe src="https://www.coinglass.com/liquidation-maxpain" width=100% height="800px" style="border: none" loading="lazy"></iframe>
-        """, height=800)
-
-    components.html("""
-          <iframe src="https://www.coinglass.com/spot-inflow-outflow" width=100% height="1500px" style="border: none" loading="lazy"></iframe>
-          """, height=2000)
+    pairs = [
+        ("https://www.coinglass.com/InflowAndOutflow","https://www.coinglass.com/whale-alert"),
+        ("https://cryptobubbles.net","https://www.coinglass.com/pro/futures/LiquidationHeatMap"),
+        ("https://www.coinglass.com/pro/options/max-pain","https://www.coinglass.com/liquidation-maxpain"),
+    ]
+    show_iframes(pairs, "https://www.coinglass.com/spot-inflow-outflow")
 
 
 def get_footer_data():
