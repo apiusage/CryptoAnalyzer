@@ -28,7 +28,7 @@ def main():
     selected = option_menu(
         menu_title=None,
         options=["Investing", "Trading", "Coin Analyzer"],
-        icons=["graph-up-arrow", "bar-chart", "coin"],  # ✅ Bootstrap icons
+        icons=["graph-up-arrow", "bar-chart", "coin"],
         menu_icon="cast",
         default_index=0,
         orientation="horizontal"
@@ -42,7 +42,7 @@ def main():
     elif selected == "Trading":
         get_trading_data()
     elif selected == "Coin Analyzer":
-        selected_coins = get_coin_table()  # single unique key
+        selected_coins = get_coin_table()
         getcontent(selected_coins)
 
 if __name__ == "__main__":

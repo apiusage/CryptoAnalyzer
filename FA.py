@@ -38,7 +38,6 @@ def get_coin_data():
     response = requests.get(url, params=params)
     return response.json()
 
-
 @st.cache_data(show_spinner=False)
 def get_coin_categories():
     url = "https://api.coingecko.com/api/v3/coins/categories"
@@ -117,7 +116,7 @@ def classify_market_cap(market_cap):
     st.success(result)
 
 def calculate_vol_mcap_ratio(market_cap, total_volume):
-    ratio = total_volume / market_cap
+    ratio = total_volume / market_cap if market_cap else 0
 
     st.success("Liquidity and trading activity - >30% = Buy")
     st.metric(label="Vol. (24h) / MCap Ratio", value=f"{ratio:.4f}", delta=f"{(ratio*100):.2f}%", border=True)
@@ -175,7 +174,7 @@ def check_increased_trading_volume(coin_symbol):
         return f"Error fetching data: {e}"
 
 def liquidity_to_supply_ratio(trading_volume_24h, circulating_supply):
-    ratio = trading_volume_24h / circulating_supply
+    ratio = trading_volume_24h / circulating_supply if circulating_supply else 0
     st.success("Liquidity to Supply Ratio")
     st.metric(label="Liquidity to Supply Ratio", value=f"{ratio:.4f}", border=True)
     if ratio > 1:
@@ -233,9 +232,8 @@ def price_vs_atl(current_price, atl):
         st.write(
             "This is rare but suggests extreme bearish conditions or market inefficiencies, and the asset may be undervalued but carry high risks.")
 
-
 def fdv_vs_market_cap(fully_diluted_valuation, market_cap):
-    ratio = fully_diluted_valuation / market_cap
+    ratio = fully_diluted_valuation / market_cap if market_cap else 0
     st.success("FDV to Market Cap Ratio")
     st.metric(label="FDV to Market Cap Ratio", value=f"{ratio:.2f}", border=True)
 
@@ -256,7 +254,7 @@ def fdv_vs_market_cap(fully_diluted_valuation, market_cap):
             """)
 
 def circulating_supply_vs_total_supply(circulating_supply, total_supply):
-    ratio = circulating_supply / total_supply
+    ratio = circulating_supply / total_supply if total_supply else 0
     st.success("Circulating Supply vs Total Supply")
     st.metric(label="Circulating vs Total Supply Ratio", value=f"{ratio:.6f}", border=True)
 
