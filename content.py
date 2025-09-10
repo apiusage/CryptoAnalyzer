@@ -347,9 +347,13 @@ def get_footer_data():
         st.markdown("[CoinCheckup](https://coincheckup.com/)")
         st.markdown("[Coinalyze](https://coinalyze.net/)")
         st.markdown("[CoinRanking](https://coinranking.com/)")
+        st.markdown("[Coincarp](https://www.coincarp.com/)")
         st.markdown("[SosoValue](https://sosovalue.com/)")
         st.markdown("[LookOnChain](https://www.lookonchain.com/index.aspx)")
         st.markdown("[Coinscan](https://www.coinscan.com/)")
+
+        st.success("Github Activities")
+        st.markdown("[Cryptomiso](https://www.cryptomiso.com/)")
         st.markdown("[DeveloperReport](https://www.developerreport.com/)")
 
         st.success("⚠️ Rugpull / Scam Detection")

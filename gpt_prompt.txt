@@ -59,6 +59,7 @@ Score: 85/100
 
 11. Security and Decentralization
 	•	Secured by Polkadot’s shared security model, benefiting from a decentralized network of validators.
+	•	Has the project been hacked before? If yes, how did they deal with it? Did the team show unprofessional behavior such as careless use of funds? Did important members leave the project?
 
 Score: 80/100
 
