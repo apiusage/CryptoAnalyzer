@@ -236,6 +236,7 @@ def getfng():
         st.line_chart(df.set_index('Date'))
 
     with fng3Col:
+        st.markdown("[FOMC Rate Moves](https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.htmlwatch-tool.html)")
         st.markdown("""
                     - **0-25**: Extreme Fear (Market pessimism, buying opportunities for the long-term).
                     - **26-50**: Fear (Investor caution, potential opportunities in undervalued assets).
@@ -243,10 +244,10 @@ def getfng():
                     - **76-100**: Extreme Greed / Euphoria (Bubble territory, extreme caution advised).
                     """)
 
-    u = "https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730"
-    t = BeautifulSoup(requests.get(u, headers={"User-Agent": "Mozilla/5.0"}).text, "html.parser").find("a", {
-            "class": "inline-list__item"}).get_text(strip=True)
-    st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
+        u = "https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730"
+        t = BeautifulSoup(requests.get(u, headers={"User-Agent": "Mozilla/5.0"}).text, "html.parser").find("a", {
+                "class": "inline-list__item"}).get_text(strip=True)
+        st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
 
 def show_iframes(pairs=None, singles=None):
     if singles:
@@ -267,8 +268,8 @@ def topIndicatorInfo():
     col1, col2, col3 = st.columns(3)
     with col1:
         st.success("**Top Warning ✅**")
-        st.markdown("""
-        - <span style="background-color: yellow; font-weight:bold;">Pi Cycle (watch closely)</span> – signals BTC peak  
+        st.markdown(f"""
+        - <span style="background-color: yellow; font-weight:bold;">Pi Cycle (watch closely)</span> – signals BTC peak
         - <span style="background-color: yellow; font-weight:bold;">Puell Multiple (watch closely)</span> - miners rich > 2, buy < 0.5  
         - Mayer – price very high (> 2× 200-day MA)  
         - 4-Year MA – long-term overbought (> 3.5× 4-year MA)  
@@ -300,8 +301,11 @@ def topIndicatorInfo():
 def get_investing_data():
     topIndicatorInfo()
     singles = [
-        ("**Bull Market Peak Signals**", "https://www.coinglass.com/bull-market-peak-signals", 2000),
-        ("**Bitcoin Exchange Balance**", "https://www.coinglass.com/Balance", 2000),
+        ("**Bull Market Peak Signals**", "https://www.coinglass.com/bull-market-peak-signals", 1000),
+        ("**Pi Cycle Top Indicator**", "https://www.coinglass.com/pro/i/pi-cycle-top-indicator", 1000),
+        ("**Bitcoin Exchange Balance**", "https://www.coinglass.com/Balance", 1000),
+        ("**Bitcoin Rainbow Chart**", "https://charts.bitbo.io/rainbow/", 1000),
+        ("**r/CryptoCurrency stats**", "https://subredditstats.com/r/CryptoCurrency", 2000),
     ]
     pairs = [
         ("https://www.coinglass.com/pro/i/CDRI", "https://www.coinglass.com/pro/i/RsiHeatMap"),
@@ -331,16 +335,15 @@ def get_investing_data():
     with total3Col:
         components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3"), height=450)
 
-    st.components.v1.iframe("https://charts.bitbo.io/rainbow/", height=800, scrolling=True)
-
 
 def get_trading_data():
     pairs = [
         ("https://www.coinglass.com/InflowAndOutflow","https://www.coinglass.com/whale-alert"),
-        ("https://cryptobubbles.net","https://www.coinglass.com/pro/futures/LiquidationHeatMap"),
+        ("https://www.coinglass.com/large-orderbook-statistics","https://www.coinglass.com/pro/futures/LiquidationHeatMap"),
         ("https://www.coinglass.com/pro/options/max-pain","https://www.coinglass.com/liquidation-maxpain"),
+        ("https://www.coinglass.com/pro/futures/TimeZoneDistribution", "https://www.coinglass.com/TopTrader/Binance")
     ]
-    show_iframes(pairs, "https://www.coinglass.com/spot-inflow-outflow")
+    show_iframes(pairs, [])
 
 
 def get_footer_data():
@@ -353,6 +356,13 @@ def get_footer_data():
         st.success("🌍 Check Accumulation Phase")
         st.markdown("[Dropstab](https://dropstab.com/tab/8kwolcb86m?slug=8kwolcb86m)")
 
+        st.success("Token Unlock")
+        st.markdown("[Tokenomist](https://tokenomist.ai/)")
+
+        st.success("Github Activities")
+        st.markdown("[Cryptomiso](https://www.cryptomiso.com/)")
+        st.markdown("[DeveloperReport](https://www.developerreport.com/)")
+
         st.success("🌍 Macro Indicators")
         st.markdown("[DXY (U.S. Dollar Index)](https://www.tradingview.com/chart/?symbol=TVC%3ADXY)")
         st.write("📈 DXY up = U.S. Dollar strengthening vs crypto & stocks")
@@ -360,17 +370,12 @@ def get_footer_data():
         st.write("💧 Higher M2 = more liquidity")
 
         st.success("📊 On-Chain Indicators")
-        st.markdown("[Pi Cycle Top Indicator](https://charts.bitbo.io/pi-cycle-top/)")
-        st.markdown("[MVRV Z-Score](https://www.coinglass.com/pro/i/bitcoin-mvrv-zscore)")
-        st.markdown("[Mayer Multiple](https://charts.bitbo.io/mayermultiple/)")
         st.markdown("[Bitcoin Address Count](https://studio.glassnode.com/charts/addresses.NewNonZeroCount)")
         st.markdown("[Bitcoin Active Addresses](https://www.bitcoinmagazinepro.com/charts/bitcoin-active-addresses/)")
-        st.markdown("[Rainbow Chart](https://www.blockchaincenter.net/en/bitcoin-rainbow-chart/)")
         st.markdown("[Stock-to-Flow Model](https://www.bitcoinmagazinepro.com/charts/stock-to-flow-model/)")
         st.markdown("[Bitcoin: Terminal Price](https://www.lookintobitcoin.com/charts/terminal-price/)")
         st.markdown("[Altcoin Season Index](https://www.bitget.com/price/altcoin-season-index)")
         st.markdown("[HODL Waves](https://www.bitcoinmagazinepro.com/charts/hodl-waves/)")
-
 
     # =============================
     # COLUMN 2 - Analytics & Security
@@ -393,17 +398,12 @@ def get_footer_data():
         st.markdown("[CoinCheckup](https://coincheckup.com/)")
         st.markdown("[Coinalyze](https://coinalyze.net/)")
         st.markdown("[CoinRanking](https://coinranking.com/)")
+        st.markdown("[Cryptobubbles](https://cryptobubbles.com/)")
         st.markdown("[Coincarp](https://www.coincarp.com/)")
         st.markdown("[SosoValue](https://sosovalue.com/)")
         st.markdown("[LookOnChain](https://www.lookonchain.com/index.aspx)")
         st.markdown("[Coinscan](https://www.coinscan.com/)")
-
-        st.success("Token Unlock")
-        st.markdown("[Tokenomist](https://tokenomist.ai/)")
-
-        st.success("Github Activities")
-        st.markdown("[Cryptomiso](https://www.cryptomiso.com/)")
-        st.markdown("[DeveloperReport](https://www.developerreport.com/)")
+        st.markdown("[Banter Bubbles](https://banterbubbles.com/)")
 
         st.success("⚠️ Rugpull / Scam Detection")
         st.markdown("[Rugcheck](https://rugcheck.xyz)")
@@ -423,8 +423,6 @@ def get_footer_data():
 
         st.success("📢 Sentiment & Community")
         st.markdown("[Fear & Greed Index](https://edition.cnn.com/markets/fear-and-greed)")
-        st.markdown("[Crypto Subreddit Stats](https://subredditstats.com/r/CryptoCurrency)")
-        st.markdown("[Banter Bubbles](https://banterbubbles.com/)")
         st.markdown("[SwaggyStocks (WSB)](https://swaggystocks.com/dashboard/wallstreetbets/realtime)")
 
         st.success("🎥 Media & Social Stats")
@@ -432,7 +430,6 @@ def get_footer_data():
         st.markdown("[The EXACT Dates To Sell Bitcoin (Raoul Pal)](https://www.youtube.com/watch?v=QzY-WI1Edmg)")
 
         st.success("📚 Other Resources")
-        st.markdown("[FOMC Rate Moves](https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.htmlwatch-tool.html)")
         st.markdown("[The Block Data](https://www.theblock.co/data/on-chain-metrics/bitcoin)")
         st.markdown("[Fred Economic Data](https://fred.stlouisfed.org/)")
         st.markdown("[Newhedge](https://newhedge.io/bitcoin)")
