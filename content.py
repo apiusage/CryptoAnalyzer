@@ -263,7 +263,42 @@ def show_iframes(pairs=None, singles=None):
             with c2:
                 components.html(f'<iframe src="{r}" width=100% height="800px" style="border:none" loading="lazy"></iframe>', height=800)
 
+def topIndicatorInfo():
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.success("**Top Warning ✅**")
+        st.markdown("""
+        - <span style="background-color: yellow; font-weight:bold;">Pi Cycle (watch closely)</span> – signals BTC peak  
+        - <span style="background-color: yellow; font-weight:bold;">Puell Multiple (watch closely)</span> - miners rich > 2, buy < 0.5  
+        - Mayer – price very high (> 2× 200-day MA)  
+        - 4-Year MA – long-term overbought (> 3.5× 4-year MA)  
+        - NUPL – most holders are winning (≥ 70%)  
+        - MVRV – unrealized gains very high (≥ 3)  
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.success("**Confirm**")
+        st.write("""
+        - **CBBI** – bull market strength  
+        - **LTH Supply** – long-term holders coins  
+        - **STH Supply** – new holders coins  
+        - **Dominance** – BTC vs altcoins  
+        - **Altcoin Season** – altcoins peaking
+        """)
+
+    with col3:
+        st.success("**Secondary**")
+        st.write("""
+        - **RSI** – short-term overbought  
+        - **Trend** – price direction  
+        - **Rainbow** – visual price guide  
+        - **Macro Oscillator** – momentum extremes  
+        - **ETF flows** – funds in/out of BTC  
+        - **Company BTC cost** – company BTC holdings
+        """)
+
 def get_investing_data():
+    topIndicatorInfo()
     singles = [
         ("https://www.coinglass.com/bull-market-peak-signals", 2000),
         ("https://www.coinglass.com/Balance", 2000),
@@ -323,7 +358,10 @@ def get_footer_data():
         st.markdown("[Bitcoin Active Addresses](https://www.bitcoinmagazinepro.com/charts/bitcoin-active-addresses/)")
         st.markdown("[Rainbow Chart](https://www.blockchaincenter.net/en/bitcoin-rainbow-chart/)")
         st.markdown("[Stock-to-Flow Model](https://www.bitcoinmagazinepro.com/charts/stock-to-flow-model/)")
+        st.markdown("[Bitcoin: Terminal Price](https://www.lookintobitcoin.com/charts/terminal-price/)")
         st.markdown("[Altcoin Season Index](https://www.bitget.com/price/altcoin-season-index)")
+        st.markdown("[HODL Waves](https://www.bitcoinmagazinepro.com/charts/hodl-waves/)")
+
 
     # =============================
     # COLUMN 2 - Analytics & Security
@@ -342,7 +380,6 @@ def get_footer_data():
         st.markdown("[Lunarcrush](https://lunarcrush.com/categories/cryptocurrencies)")
         st.markdown("[CryptoSlate](https://cryptoslate.com/coins/)")
         st.markdown("[CryptoRank](https://cryptorank.io/)")
-        st.markdown("[Tokenomist](https://tokenomist.ai/)")
         st.markdown("[OnChainFX](https://onchainfx.com/)")
         st.markdown("[CoinCheckup](https://coincheckup.com/)")
         st.markdown("[Coinalyze](https://coinalyze.net/)")
@@ -351,6 +388,9 @@ def get_footer_data():
         st.markdown("[SosoValue](https://sosovalue.com/)")
         st.markdown("[LookOnChain](https://www.lookonchain.com/index.aspx)")
         st.markdown("[Coinscan](https://www.coinscan.com/)")
+
+        st.success("Token Unlock")
+        st.markdown("[Tokenomist](https://tokenomist.ai/)")
 
         st.success("Github Activities")
         st.markdown("[Cryptomiso](https://www.cryptomiso.com/)")
@@ -369,6 +409,7 @@ def get_footer_data():
         st.markdown("[Etherscan](https://etherscan.io/)")
         st.markdown("[BSCScan](https://bscscan.com/)")
         st.markdown("[Solscan](https://solscan.io/)")
+        st.markdown("[Avascan](https://avascan.info/)")
         st.markdown("[DEX Screener](https://dexscreener.com/)")
 
         st.success("📢 Sentiment & Community")

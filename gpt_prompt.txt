@@ -91,6 +91,9 @@ Score: 70/100
 
 Overall, Moonbeam (GLMR) demonstrates several factors associated with resilience and longevity in the cryptocurrency space, supported by its integration within the Polkadot ecosystem and focus on cross-chain interoperability.
 
+17. Any good reason to buy and hodl?
+For example, $RNDR. Apple is using them and in a world where GPU shortage is going to further increase due to much needed applications in computer graphic rendering and AI.
+
 Overall Analysis for Moonbeam (GLMR)
 
 Using the scores assigned to each factor, we calculate the overall score for Moonbeam by averaging the individual scores:
