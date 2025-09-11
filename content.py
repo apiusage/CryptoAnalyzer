@@ -300,15 +300,23 @@ def topIndicatorInfo():
 def get_investing_data():
     topIndicatorInfo()
     singles = [
-        ("https://www.coinglass.com/bull-market-peak-signals", 2000),
-        ("https://www.coinglass.com/Balance", 2000),
+        ("**Bull Market Peak Signals**", "https://www.coinglass.com/bull-market-peak-signals", 2000),
+        ("**Bitcoin Exchange Balance**", "https://www.coinglass.com/Balance", 2000),
     ]
     pairs = [
         ("https://www.coinglass.com/pro/i/CDRI", "https://www.coinglass.com/pro/i/RsiHeatMap"),
     ]
 
-    show_iframes(pairs, singles)
+    # Create tabs for singles
+    tabs = st.tabs([label for label, _, _ in singles])
+    for tab, (label, url, height) in zip(tabs, singles):
+        with tab:
+            st.components.v1.iframe(url, height=height, scrolling=True)
+
+    # Show pairs as before
+    show_iframes(pairs, [])
     st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders and investors moving funds out of volatile assets (like BTC, ETH, altcoins) into stablecoins.")
+
     colUSDT, colUSDC = st.columns(2)
     with colUSDT:
         components.html(embedTradingViewChart("CRYPTOCAP:USDT.D|1M"), height=450)
@@ -324,6 +332,7 @@ def get_investing_data():
         components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3"), height=450)
 
     st.components.v1.iframe("https://charts.bitbo.io/rainbow/", height=800, scrolling=True)
+
 
 def get_trading_data():
     pairs = [
