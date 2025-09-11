@@ -320,6 +320,11 @@ def get_investing_data():
     # Show pairs as before
     show_iframes(pairs, [])
     st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders and investors moving funds out of volatile assets (like BTC, ETH, altcoins) into stablecoins.")
+    st.markdown("""
+                - Keep 1M monthly charts for USDT.D, USDC.D, TOTAL, TOTAL2, TOTAL3 — ideal for spotting bull market tops.
+                - **1M**: Best timeframe to analyze for a bull market top. Bull market tops develop over months, not days
+                - **(1W, 1D)**: Shorter timeframes are noisy and show temporary fluctuations.
+                """)
 
     colUSDT, colUSDC = st.columns(2)
     with colUSDT:
@@ -329,14 +334,64 @@ def get_investing_data():
 
     totalCol, total2Col, total3Col = st.columns(3)
     with totalCol:
-        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL"), height=450)
+        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL|1M"), height=450)
     with total2Col:
-        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL2"), height=450)
+        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL2|1M"), height=450)
     with total3Col:
-        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3"), height=450)
+        components.html(embedTradingViewChart("CRYPTOCAP:TOTAL3|1M"), height=450)
 
+
+def datamishInfo():
+    # Data with exact trade durations
+    data = {
+        "Timeframe": ["360D – 180D", "90D", "30D", "14D", "7D", "2D", "24H", "12H", "6H", "4H", "2H", "1H"],
+        "Trade Duration": [
+            "2–12 months",
+            "1–3 months",
+            "2–4 weeks",
+            "1–2 weeks",
+            "4–7 days",
+            "1–2 days",
+            "12–24 hours",
+            "6–12 hours",
+            "3–6 hours",
+            "2–4 hours",
+            "1–2 hours",
+            "30–60 minutes"
+        ],
+        "Use Case": [
+            "Macro trend / cycle tops or bottoms",
+            "Macro trend / swing trades",
+            "Short-term swings, funding rate extremes",
+            "Weekly sentiment, shorts/liquidation spikes",
+            "Short swing trades, monitor BTC shorts & funding",
+            "Intraday moves, liquidation events",
+            "Short-term swing trades",
+            "Intraday monitoring",
+            "Intraday scalps / leverage shifts",
+            "Short-term entries/exits",
+            "Very short-term moves",
+            "Ultra short-term scalping / fast BTC shorts & funding moves"
+        ]
+    }
+
+    df = pd.DataFrame(data)
+
+    # Define desired order (1H first, 360D last)
+    order = ["1H", "2H", "4H", "6H", "12H", "24H", "2D", "7D", "14D", "30D", "90D", "360D – 180D"]
+    df["Timeframe"] = pd.Categorical(df["Timeframe"], categories=order, ordered=True)
+    df = df.sort_values("Timeframe").reset_index(drop=True)  # Reset index
+
+    # Display as interactive datatable
+    st.dataframe(df, width=1000)
 
 def get_trading_data():
+    col1, col2 = st.columns(2)
+    with col1:
+        datamishInfo()
+    with col2:
+        st.markdown("[Datamish](https://datamish.com/)")
+        st.markdown("[Cryptoprediction](https://cryptoprediction.io/)")
     pairs = [
         ("https://www.coinglass.com/InflowAndOutflow","https://www.coinglass.com/whale-alert"),
         ("https://www.coinglass.com/large-orderbook-statistics","https://www.coinglass.com/pro/futures/LiquidationHeatMap"),
@@ -384,7 +439,6 @@ def get_footer_data():
         st.success("🔍 Analytics Platforms")
         st.markdown("[Glassnode](https://studio.glassnode.com/home)")
         st.markdown("[CryptoQuant](https://cryptoquant.com/asset/btc/summary)")
-        st.markdown("[Cryptoprediction](https://cryptoprediction.io/)")
         st.markdown("[Santiment](https://app.santiment.net/)")
         st.markdown("[Nansen](https://app.nansen.ai/)")
         st.markdown("[Laevitas](https://app.laevitas.ch/assets/home)")
