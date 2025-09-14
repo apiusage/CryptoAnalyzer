@@ -31,12 +31,11 @@ def get_coin_data():
     params = {
         'vs_currency': 'usd',
         'order': 'market_cap_desc',
-        'per_page': 200,  # Number of coins to display
+        'per_page': 200,
         'page': 1,
         'sparkline': 'false'
     }
-    response = requests.get(url, params=params)
-    return response.json()
+    return requests.get(url, params=params)  # return raw response
 
 @st.cache_data(show_spinner=False)
 def get_coin_categories():
