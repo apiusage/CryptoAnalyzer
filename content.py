@@ -16,9 +16,28 @@ def sticky_scroll_to_top():
 
 @st.cache_data(ttl=300)
 def get_coin_data_cached():
-    data = get_coin_data()  # 🔹 Your existing API call
+    response = get_coin_data()
+
+    # ✅ Check status code
+    if response.status_code != 200:
+        # Try to get API error details (JSON) if available
+        try:
+            error_detail = response.json()
+        except Exception:
+            error_detail = response.text[:300]  # fallback: show first 300 chars
+
+        raise ValueError(
+            f"⚠️ API request failed!\n"
+            f"🔹 Status: {response.status_code} ({response.reason})\n"
+            f"🔹 URL: {response.url}\n"
+            f"🔹 Details: {error_detail}"
+        )
+
+    # ✅ Parse data
+    data = response.json()
     if not data or not isinstance(data, list):
-        raise ValueError("⚠️ Failed to fetch coin data. Please refresh.")
+        raise ValueError("⚠️ API returned no data or wrong format. Please refresh.")
+
     return data
 
 def deduplicate_coins(coins):
