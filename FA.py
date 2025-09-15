@@ -153,7 +153,7 @@ def check_increased_trading_volume(coin_symbol):
         volume_24h_previous = data['total_volumes'][0][1]  # Previous 24h volume
 
         # Calculate the percentage increase in volume
-        volume_increase = ((volume_24h - volume_24h_previous) / volume_24h_previous) * 100
+        volume_increase = ((volume_24h - volume_24h_previous) / volume_24h_previous * 100) if volume_24h_previous else 0
 
         # Determine if the pump is likely to last based on the volume increase
         if volume_increase > 50:
