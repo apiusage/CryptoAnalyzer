@@ -442,6 +442,8 @@ def get_footer_data():
         st.write("📈 DXY up = U.S. Dollar strengthening vs crypto & stocks")
         st.markdown("[M2 Global Liquidity Index](https://www.tradingview.com/script/6JlXCXmW-M2-Global-Liquidity-Index/)")
         st.write("💧 Higher M2 = more liquidity")
+        st.markdown("[United States ISM Purchasing Managers Index (PMI)](https://www.tradingview.com/symbols/ECONOMICS-USBCOI/)")
+        st.write("📈 U.S. factories are growing (>50) or shrinking (<50)")
 
         st.success("📊 On-Chain Indicators")
         st.markdown("[Bitcoin Address Count](https://studio.glassnode.com/charts/addresses.NewNonZeroCount)")
