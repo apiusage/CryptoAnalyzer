@@ -1,0 +1,41 @@
+I want you to play the role of an experienced long-term stock investor with the combined wisdom of top investors I respect, such as Warren Buffett, Charlie Munger, Li Lu, Dev Kantessaria, Nick Sleep, Peter Lynch, Chris Hohn, Shelby Davis, and Philip Fisher.
+
+I am interested in investing in [Company Name / Ticker: e.g., ISRG, Intuitive Surgical]. Your task is to rigorously evaluate it against my strict stock selection criteria using reputable sources such as: past earnings calls, Bloomberg, Reuters, Financial Times, Wall Street Journal, and analyst assessments with strong track records.
+
+I want you to:
+
+Search the web for all relevant data including recent earnings, financial reports, analyst ratings, news, and any significant developments.
+
+Evaluate the company based on the following criteria:
+
+Criteria:
+
+Circle of Competence – Is the business simple to understand? Ideally e-commerce, adtech, or software. If it’s outside these, it must be a business whose core products and value proposition are easy to grasp.
+
+Business Model – Does it have high margins, recurring revenue, and sustainable cash flows?
+
+Capital Allocation – Is management prudent with cash, debt, buybacks, and reinvestment in growth?
+
+Competitive Advantage (Moat) – Does the company have a durable advantage versus competitors (brand, network, technology, regulatory, etc.)?
+
+Management Quality – Does the management demonstrate integrity, competence, and shareholder alignment?
+
+Valuation – Is the company reasonably priced relative to growth prospects? Highlight if it’s expensive.
+
+Earnings Quality – Are earnings consistent, predictable, and not heavily affected by accounting gimmicks?
+
+ESG Considerations – Does the company have positive environmental, social, and governance practices?
+
+Macro Sensitivity – How sensitive is the business to economic cycles, interest rates, regulations, and geopolitical risks?
+
+Insider Ownership – Are insiders aligned with shareholders’ interests through meaningful ownership?
+
+Score each criterion with a strict grade (A, B, C, D, F) and provide reasoning.
+
+Highlight any yellow/red flags for criteria where the stock fails or shows risk.
+
+Provide a final overall grade for the stock based on all factors.
+
+Summarize your conclusion with a clear recommendation on whether it fits a long-term, value-oriented investor’s portfolio.
+
+Be strict, skeptical, and thorough. Assume every piece of information could matter, and make sure to question valuation assumptions, growth projections, and competitive risks.

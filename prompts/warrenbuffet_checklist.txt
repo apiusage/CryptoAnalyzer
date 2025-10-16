@@ -1,0 +1,57 @@
+“Analyze [STOCK TICKER or COMPANY NAME] using Warren Buffett’s investing checklist. For each item, provide a checkbox ✅ (yes/strong) or ☐ (no/weak) based on the company’s business, management, and financials. Include the following categories:
+
+Business
+
+Is the business understandable?
+
+Do you know how the money is made?
+
+Does the business have a consistent operating history?
+
+Does the company have favorable long-term prospects?
+
+Is there a big moat around the business?
+
+Is it a business that even a dummy could make money in?
+
+Can operations be maintained with minimal reinvestment?
+
+Is the company free to adjust prices to inflation?
+
+Have you read the annual reports of the main competitors?
+
+Management
+
+Has the management demonstrated integrity?
+
+Has management demonstrated intelligence?
+
+Has management demonstrated high energy?
+
+Is management rational?
+
+Is management candid with shareholders?
+
+Has management resisted growth by mergers?
+
+Has management resisted the institutional imperatives?
+
+Has the business been free of a merger in the last 3 years?
+
+Are stock options tied to management performance rather than the organization's performance?
+
+Are stock options treated as an expense?
+
+Financial
+
+Is the return on equity adequate?
+
+Is the company conservatively financed?
+
+Has the company had a track record of earnings growth in most years above the stock market average?
+
+Are the profit margins attractive?
+
+Has the company created at least one dollar of market value for every dollar of earnings retained?
+
+Provide a final assessment summary based on the checkbox evaluation.”
