@@ -1,0 +1,5 @@
+streamlit
+git+https://github.com/mmz-001/st-copy-to-clipboard.git
+pytrends
+beautifulsoup4
+streamlit-option-menu
