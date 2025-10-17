@@ -2,6 +2,7 @@ import streamlit.components.v1 as components
 from TA import *
 from FA import *
 from bs4 import BeautifulSoup
+import re
 
 PROMPT_DIR = "prompts/"
 
@@ -426,6 +427,29 @@ def get_trading_data():
     ]
     show_iframes(pairs, [])
 
+def get_latest_shiller_pe():
+    try:
+        url = "https://www.multpl.com/shiller-pe"
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        current_div = soup.find("div", id="current")
+        if current_div:
+            # Get the <b> tag
+            bold_tag = current_div.find("b")
+            if bold_tag:
+                # The number is usually the next sibling text node after <b>
+                text_after_b = bold_tag.next_sibling
+                if text_after_b:
+                    # Extract first number using regex
+                    match = re.search(r"\d+\.?\d*", text_after_b)
+                    if match:
+                        return match.group(0)
+        return "N/A"
+    except Exception as e:
+        print("Error fetching Shiller PE:", e)
+        return "N/A"
 
 def get_footer_data():
     # =============================
@@ -562,11 +586,15 @@ def get_footer_data():
             "https://www.youtube.com/watch?v=MN5raca6oFA"
         )
 
+        shiller_value = get_latest_shiller_pe()
+        print(str(shiller_value))
+
         # Buffett / Shiller PE
         link_section([
             ("Market Valuation Models", "https://www.currentmarketvaluation.com/"),
+            ("Multpl", "https://www.multpl.com/"),
             ("US - Buffett Indicator > 100", "https://en.macromicro.me/charts/406/us-buffet-index-gspc"),
-            ("Shiller PE Ratio", "https://www.multpl.com/shiller-pe")
+            (f"Shiller PE Ratio: {shiller_value}", "https://www.multpl.com/shiller-pe")  # no bold
         ])
         indicator_guide([
             ("Low ratio (<15)", "Market may be **undervalued** → future returns likely higher than average.",
