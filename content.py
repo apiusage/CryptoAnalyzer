@@ -528,7 +528,7 @@ def get_footer_data():
                 "<li style='margin-bottom:6px; line-height:1.4;'>"
                 f"<span style='background-color:{bg}; color:{fg}; font-weight:bold; "
                 "padding:2px 6px; border-radius:4px;'>"
-                f"{label}</span> – {desc}"
+                f"{label}</span> {desc}"
                 "</li>"
             )
         html += "</ul>"
@@ -574,6 +574,7 @@ def get_footer_data():
             ("Average (~16–17)", "Market is **fairly valued**.", "lightblue", "black"),
             ("High ratio (>25–30)", "Market may be **overvalued** → future returns likely lower than average.",
              "orange", "black"),
+            ("Historial Warning Signal", "**>32+** (1-3 yr later 25-50% downside)", "firebrick", "white")
         ])
 
         # Yield Curve
