@@ -270,6 +270,8 @@ def getfng():
                     - **51-75**: Greed (Optimism, but market may be overheated. Consider profits or hedging).
                     - **76-100**: Extreme Greed / Euphoria (Bubble territory, extreme caution advised).
                     """)
+        df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
+        scores = display_unified_confidence_score(df)
 
     with fng4Col:
         get_coinbase_app_rank()
