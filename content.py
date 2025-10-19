@@ -1,7 +1,6 @@
 import streamlit.components.v1 as components
 from TA import *
 from FA import *
-from bs4 import BeautifulSoup
 import re
 
 PROMPT_DIR = "prompts/"
@@ -246,14 +245,16 @@ def getcontent(selected_coins):
 
 def getfng():
     # Fear and Greed Meter
-    fng1Col, fng2Col, fng3Col = st.columns(3)
+    fng1Col, fng2Col, fng3Col, fng4Col = st.columns(4)
     with fng1Col:
         df = fetch_fng("alternative_me")
         st.success("**Fear and Greed Index (alternative.me): " + str(df.iloc[0, 1]) + "**")
         col1, col2 = st.columns(2)
-        with col1: st.image("https://alternative.me/crypto/fear-and-greed-index.png",
+        with col1:
+            st.image("https://alternative.me/crypto/fear-and-greed-index.png",
                             caption="Latest Crypto Fear & Greed Index")
-        with col2: st.line_chart(df.set_index('Date'))
+        with col2:
+            st.line_chart(df.set_index('Date'))
 
     with fng2Col:
         df = fetch_fng("coinmarketcap")
@@ -270,10 +271,9 @@ def getfng():
                     - **76-100**: Extreme Greed / Euphoria (Bubble territory, extreme caution advised).
                     """)
 
-        u = "https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730"
-        t = BeautifulSoup(requests.get(u, headers={"User-Agent": "Mozilla/5.0"}).text, "html.parser").find("a", {
-                "class": "inline-list__item"}).get_text(strip=True)
-        st.markdown(f"<h2 style='text-align:center'>📱 Coinbase App Store Rank {t}</h2>", unsafe_allow_html=True)
+    with fng4Col:
+        get_coinbase_app_rank()
+        btc_weekly_dashboard_complete()
 
 def show_iframes(pairs=None, singles=None):
     if singles:
@@ -587,7 +587,6 @@ def get_footer_data():
         )
 
         shiller_value = get_latest_shiller_pe()
-        print(str(shiller_value))
 
         # Buffett / Shiller PE
         link_section([
