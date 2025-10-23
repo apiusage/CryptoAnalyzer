@@ -4,6 +4,7 @@ import pandas as pd
 import yfinance as yf
 from bs4 import BeautifulSoup
 import numpy as np
+import warnings
 
 def get_technicals_stats(coin_symbol):
     technicals_url = (
@@ -264,3 +265,186 @@ def get_coinbase_app_rank():
         st.write(f"**📱 Coinbase App Store Rank:** {rank}")
     else:
         st.write("**📱 Coinbase App Store Rank:** Not found")
+
+
+def mega_market_ticker_fixed():
+    """Ultra-condensed, actionable market ticker for pro traders (stocks, FX, yields, commodities, crypto, liquidity)."""
+
+    COINGECKO = "https://api.coingecko.com/api/v3"
+
+    # --- Helpers ---
+    def get_yahoo_change_safe(symbol):
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                df = yf.download(symbol, period="2d", interval="1d", progress=False, auto_adjust=True)
+            if df.empty or len(df) < 2:
+                return 0.0
+            last = float(df["Close"].iat[-1])
+            prev = float(df["Close"].iat[-2])
+            return (last - prev) / prev * 100
+        except:
+            return 0.0
+
+    def get_coin_change(coin):
+        try:
+            r = requests.get(f"{COINGECKO}/simple/price",
+                             params={"ids": coin, "vs_currencies": "usd", "include_24hr_change": "true"},
+                             timeout=10).json()
+            return float(r.get(coin, {}).get("usd_24h_change", 0.0))
+        except:
+            return 0.0
+
+    def stablecoin_flow():
+        metrics = {}
+        for s in ["tether", "usd-coin", "dai"]:
+            try:
+                r = requests.get(f"{COINGECKO}/coins/{s}/market_chart",
+                                 params={"vs_currency": "usd", "days": 2}, timeout=10).json()
+                caps = r.get("market_caps", [])
+                if caps and len(caps) > 1:
+                    df = pd.DataFrame(caps, columns=["t", "m"])
+                    df["m"] = df["m"].astype(float)
+                    metrics[s] = (df["m"].iloc[-1] - df["m"].iloc[0]) / df["m"].iloc[0] * 100
+                else:
+                    metrics[s] = 0.0
+            except:
+                metrics[s] = 0.0
+        return metrics
+
+    # --- Fetch data ---
+    btc = get_coin_change("bitcoin")
+    eth = get_coin_change("ethereum")
+    dxy = get_yahoo_change_safe("DX-Y.NYB")
+    vix = get_yahoo_change_safe("^VIX")
+    spx = get_yahoo_change_safe("^GSPC")
+    qqq = get_yahoo_change_safe("QQQ")
+    dow = get_yahoo_change_safe("^DJI")
+    gold = get_yahoo_change_safe("GC=F")
+    silver = get_yahoo_change_safe("SI=F")
+    oil = get_yahoo_change_safe("CL=F")
+    tnx = get_yahoo_change_safe("^TNX")
+    t2y = get_yahoo_change_safe("^IRX")
+    eurusd = get_yahoo_change_safe("EURUSD=X")
+    jpyusd = get_yahoo_change_safe("JPY=X")
+    sc = stablecoin_flow()
+
+    # --- Build actionable insights ---
+    actions = []
+
+    # Equities
+    if spx < -0.3 or qqq < -0.3:
+        actions.append("📉 Stocks down → cautious")
+    elif spx > 0.3 or qqq > 0.3:
+        actions.append("📈 Stocks up → consider buying")
+    else:
+        actions.append("🟡 Stocks stable → holding pattern")
+
+    if dow < -0.3:
+        actions.append("📉 Dow down → risk-off")
+    elif dow > 0.3:
+        actions.append("📈 Dow up → industrials strong")
+
+    # USD / FX
+    if dxy > 0.2:
+        actions.append("💵 USD strong → exporters pressured")
+    elif dxy < -0.2:
+        actions.append("💵 USD weak → exporters benefit")
+    else:
+        actions.append("🟢 USD steady → balanced FX")
+
+    if eurusd < -0.2:
+        actions.append("🇪🇺 EUR down → USD strength")
+    elif eurusd > 0.2:
+        actions.append("🇪🇺 EUR up → USD weakness")
+
+    if jpyusd < -0.2:
+        actions.append("🇯🇵 JPY down → USD strength")
+    elif jpyusd > 0.2:
+        actions.append("🇯🇵 JPY up → yen strengthening")
+
+    # Volatility
+    if vix > 2:
+        actions.append("⚠️ VIX high → cautious")
+    elif vix < -2:
+        actions.append("✅ VIX low → market calm")
+    else:
+        actions.append("ℹ️ VIX neutral → normal volatility")
+
+    # Commodities
+    if gold > 0.3:
+        actions.append("🥇 Gold up → safe-haven strong")
+    elif gold < -0.3:
+        actions.append("🥇 Gold down → consider selling")
+    else:
+        actions.append("🟡 Gold stable → holding value")
+
+    if silver > 0.3:
+        actions.append("🥈 Silver up → industrial/hedge strong")
+    elif silver < -0.3:
+        actions.append("🥈 Silver down → weak")
+
+    if oil > 0.3:
+        actions.append("🛢 Oil up → energy strong")
+    elif oil < -0.3:
+        actions.append("🛢 Oil down → energy weak")
+    else:
+        actions.append("🟢 Oil stable → energy balanced")
+
+    # Yields
+    if tnx > 0.2:
+        actions.append("📊 10Y yields rising → bonds less attractive")
+    elif tnx < -0.2:
+        actions.append("📊 10Y yields down → bonds attractive")
+    else:
+        actions.append("ℹ️ 10Y yields flat → rates steady")
+
+    if t2y > 0.2:
+        actions.append("📈 2Y rising → short-term rates higher")
+    elif t2y < -0.2:
+        actions.append("📉 2Y down → short-term rates lower")
+    else:
+        actions.append("ℹ️ 2Y flat → short rates stable")
+
+    # Crypto
+    if btc > 1 or eth > 1:
+        actions.append("🚀 Crypto up → can buy")
+    elif btc < -1 or eth < -1:
+        actions.append("⚠️ Crypto down → cautious")
+    else:
+        actions.append("🟡 Crypto ranging → wait for breakout")
+
+    # Stablecoins / liquidity
+    if sc.get("tether", 0) > 0.3:
+        actions.append("💰 USDT inflow → more crypto buying")
+    elif sc.get("tether", 0) < -0.3:
+        actions.append("💸 USDT outflow → crypto selling")
+
+    if sc.get("usd-coin", 0) > 0.3:
+        actions.append("💰 USDC inflow → stablecoins rising")
+
+    if sc.get("dai", 0) > 0.3:
+        actions.append("💧 DAI inflow → DeFi liquidity rising")
+
+    # ------------------ Combine text ------------------
+    brief_text = " | ".join(actions) if actions else "Market steady, no major moves."
+
+    # ------------------ Horizontal scrolling ticker ------------------
+    ticker_html = f"""
+    <div style='overflow:hidden; white-space:nowrap; background-color:#000; padding:10px 0; border-radius:10px;'>
+        <div style='display:inline-block; padding-left:100%;
+                    animation: ticker 60s linear infinite;
+                    font-size:20px; font-weight:600; color:#00ffcc;
+                    font-family:"Segoe UI", Arial, sans-serif;'>
+            💡 {brief_text} &nbsp;&nbsp;&nbsp; 💡 {brief_text}
+        </div>
+    </div>
+    <style>
+    @keyframes ticker {{
+        0% {{ transform: translateX(0%); }}
+        100% {{ transform: translateX(-100%); }}
+    }}
+    </style>
+    """
+    st.markdown(ticker_html, unsafe_allow_html=True)
+

@@ -2,6 +2,7 @@ from PIL import Image
 from content import *
 from streamlit_option_menu import option_menu
 from pathlib import Path
+from TA import *
 
 # Convert PNG to JPEG properly
 img = Image.open("images/bitcoin.png").convert("RGB")
@@ -23,6 +24,9 @@ st.markdown(
     '<div class="logo-banner"><h1>🚀 <span style="color:#00ffc6;">Crypto / Stock / Bond / Reits Analyzer</span> 📊</h1></div>',
     unsafe_allow_html=True
 )
+
+# Show real-time, actionable market summary
+mega_market_ticker_fixed()
 
 def main():
     selected = option_menu(
