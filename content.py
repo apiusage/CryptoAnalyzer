@@ -332,12 +332,11 @@ def get_investing_data():
     singles = [
         ("**Bull Market Peak Signals**", "https://www.coinglass.com/bull-market-peak-signals", 1000),
         ("**Pi Cycle Top Indicator**", "https://www.coinglass.com/pro/i/pi-cycle-top-indicator", 1000),
+        ("**CDRI**", "https://www.coinglass.com/pro/i/CDRI", 1000),
+        ("**RsiHeatMap**", "https://www.coinglass.com/pro/i/RsiHeatMap", 1000),
         ("**Bitcoin Exchange Balance**", "https://www.coinglass.com/Balance", 1000),
         ("**Bitcoin Rainbow Chart**", "https://charts.bitbo.io/rainbow/", 1000),
         ("**r/CryptoCurrency stats**", "https://subredditstats.com/r/CryptoCurrency", 2000),
-    ]
-    pairs = [
-        ("https://www.coinglass.com/pro/i/CDRI", "https://www.coinglass.com/pro/i/RsiHeatMap"),
     ]
 
     # Create tabs for singles
@@ -346,8 +345,6 @@ def get_investing_data():
         with tab:
             st.components.v1.iframe(url, height=height, scrolling=True)
 
-    # Show pairs as before
-    show_iframes(pairs, [])
     st.success("**USDT / USDC Dominance** - High USDT / USDC dominance = Traders and investors moving funds out of volatile assets (like BTC, ETH, altcoins) into stablecoins.")
     st.markdown("""
                 - Keep 1M monthly charts for USDT.D, USDC.D, TOTAL, TOTAL2, TOTAL3 — ideal for spotting bull market tops.
