@@ -121,7 +121,7 @@ def get_coin_table():
         # --- Render editable table ---
         edited_df = st.data_editor(
             df_display,
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
             column_config=column_config,
             key="coins_table_editor"

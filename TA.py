@@ -266,11 +266,12 @@ def get_coinbase_app_rank():
     else:
         st.write("**📱 Coinbase App Store Rank:** Not found")
 
-
-def mega_market_ticker_fixed():
-    """Ultra-condensed, actionable market ticker for pro traders (stocks, FX, yields, commodities, crypto, liquidity)."""
-
-    COINGECKO = "https://api.coingecko.com/api/v3"
+def live_market_ticker():
+    """Ultra-condensed, actionable market ticker for pro traders (stocks, FX, yields, commodities, yields)."""
+    import warnings
+    import yfinance as yf
+    import pandas as pd
+    import streamlit as st
 
     # --- Helpers ---
     def get_yahoo_change_safe(symbol):
@@ -286,35 +287,7 @@ def mega_market_ticker_fixed():
         except:
             return 0.0
 
-    def get_coin_change(coin):
-        try:
-            r = requests.get(f"{COINGECKO}/simple/price",
-                             params={"ids": coin, "vs_currencies": "usd", "include_24hr_change": "true"},
-                             timeout=10).json()
-            return float(r.get(coin, {}).get("usd_24h_change", 0.0))
-        except:
-            return 0.0
-
-    def stablecoin_flow():
-        metrics = {}
-        for s in ["tether", "usd-coin", "dai"]:
-            try:
-                r = requests.get(f"{COINGECKO}/coins/{s}/market_chart",
-                                 params={"vs_currency": "usd", "days": 2}, timeout=10).json()
-                caps = r.get("market_caps", [])
-                if caps and len(caps) > 1:
-                    df = pd.DataFrame(caps, columns=["t", "m"])
-                    df["m"] = df["m"].astype(float)
-                    metrics[s] = (df["m"].iloc[-1] - df["m"].iloc[0]) / df["m"].iloc[0] * 100
-                else:
-                    metrics[s] = 0.0
-            except:
-                metrics[s] = 0.0
-        return metrics
-
     # --- Fetch data ---
-    btc = get_coin_change("bitcoin")
-    eth = get_coin_change("ethereum")
     dxy = get_yahoo_change_safe("DX-Y.NYB")
     vix = get_yahoo_change_safe("^VIX")
     spx = get_yahoo_change_safe("^GSPC")
@@ -327,7 +300,6 @@ def mega_market_ticker_fixed():
     t2y = get_yahoo_change_safe("^IRX")
     eurusd = get_yahoo_change_safe("EURUSD=X")
     jpyusd = get_yahoo_change_safe("JPY=X")
-    sc = stablecoin_flow()
 
     # --- Build actionable insights ---
     actions = []
@@ -405,26 +377,6 @@ def mega_market_ticker_fixed():
         actions.append("📉 2Y down → short-term rates lower")
     else:
         actions.append("ℹ️ 2Y flat → short rates stable")
-
-    # Crypto
-    if btc > 1 or eth > 1:
-        actions.append("🚀 Crypto up → can buy")
-    elif btc < -1 or eth < -1:
-        actions.append("⚠️ Crypto down → cautious")
-    else:
-        actions.append("🟡 Crypto ranging → wait for breakout")
-
-    # Stablecoins / liquidity
-    if sc.get("tether", 0) > 0.3:
-        actions.append("💰 USDT inflow → more crypto buying")
-    elif sc.get("tether", 0) < -0.3:
-        actions.append("💸 USDT outflow → crypto selling")
-
-    if sc.get("usd-coin", 0) > 0.3:
-        actions.append("💰 USDC inflow → stablecoins rising")
-
-    if sc.get("dai", 0) > 0.3:
-        actions.append("💧 DAI inflow → DeFi liquidity rising")
 
     # ------------------ Combine text ------------------
     brief_text = " | ".join(actions) if actions else "Market steady, no major moves."

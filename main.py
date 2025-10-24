@@ -20,13 +20,16 @@ st.set_page_config(**PAGE_CONFIG)
 st.markdown(f"<style>{Path('style.css').read_text()}</style>", unsafe_allow_html=True)
 
 # Inline Banner
-st.markdown(
-    '<div class="logo-banner"><h1>🚀 <span style="color:#00ffc6;">Crypto / Stock / Bond / Reits Analyzer</span> 📊</h1></div>',
-    unsafe_allow_html=True
-)
+st.markdown("""
+<a href="/" target="_self" class="logo-banner">
+    <h1>
+        <span class="emoji">🚀</span> AIO Analyzer <span class="emoji">📊</span>
+    </h1>
+</a>
+""", unsafe_allow_html=True)
 
 # Show real-time, actionable market summary
-mega_market_ticker_fixed()
+live_market_ticker()
 
 def main():
     selected = option_menu(
