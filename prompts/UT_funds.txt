@@ -1,0 +1,41 @@
+"Conduct a detailed technical analysis of the fund using data from {fundURL}.
+
+The report should include:
+
+📍 Current Situation:
+
+Current price
+
+Pivot point
+
+Overall technical summary
+
+Moving averages (simple and exponential)
+
+Technical indicator signals
+
+⚙️ Short-Term Technical Interpretation:
+
+Interpret values and implications of key indicators: RSI, Stochastic, StochRSI, MACD, ADX, Williams %R, CCI, and others as available.
+
+Comment on short-term momentum, trend strength, and overbought/oversold status.
+
+📈 Price Range from Pivot Levels:
+
+List S1, S2, S3, Pivot, R1, R2, R3
+
+Identify potential support and resistance zones
+
+🧭 Estimated Outlook:
+
+Provide forecasted price ranges for:
+
+1–2 week outlook
+
+1–3 month outlook
+
+6–12 month outlook
+
+Comment on trend strength, momentum, and whether a reversal or continuation is likely
+
+Use clear formatting, appropriate headers, and emojis for each section. Return the summary in English."
