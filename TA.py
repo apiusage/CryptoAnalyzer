@@ -140,7 +140,6 @@ def btc_weekly_dashboard_complete():
     else:
         st.markdown("**⚖️ Enhanced Detector:** Neutral — mixed momentum, unclear volume trends.")
 
-
 def sma_signal_table():
     # --- Fetch BTC weekly data ---
     df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
@@ -150,14 +149,16 @@ def sma_signal_table():
 
     close_series = df['Close']
     price = close_series.iloc[-1].item()
+    st.markdown(f"**💰 Current Price:** {price:.2f} ")
+    st.markdown("Current Price below SMA → SELL (bearish trend)")
+    st.markdown("Current Price above SMA → BUY (bullish trend)")
 
-    st.markdown(f"**💰 Current Price:** {price:.2f}")
-
+    # SMA periods: (Term, weeks)
     sma_periods = {
-        "SMA9": ("Short-term", 9, 1.01),
-        "SMA20": ("Short-term", 20, 1.01),
-        "SMA50": ("Medium-term", 50, 1.01),
-        "SMA200": ("Long-term", 200, 1.05)
+        "SMA9": ("Short-term", 9),
+        "SMA20": ("Short-term", 20),
+        "SMA50": ("Medium-term", 50),
+        "SMA200": ("Long-term", 200)
     }
 
     # Convert weeks to readable timeframe
@@ -172,33 +173,29 @@ def sma_signal_table():
             years = weeks / 52
             return f"~{round(years, 1)} years"
 
-    sma_values, sma_directions = {}, {}
-    for name, (term, weeks, multiplier) in sma_periods.items():
+    sma_values = {}
+    for name, (term, weeks) in sma_periods.items():
         sma_series = close_series.rolling(weeks).mean().dropna()
-        if len(sma_series) < 2:
-            last_val = sma_series.iloc[-1].item() if len(sma_series) else price
-        else:
-            last_val = sma_series.iloc[-1].item()
+        last_val = sma_series.iloc[-1].item() if len(sma_series) else price
         sma_values[name] = last_val
 
     sma_emojis = {"SMA9": "🔹", "SMA20": "🔸", "SMA50": "🟡", "SMA200": "🟠"}
 
-    # Build table data
+    # Build table data with correct SMA logic
     table_data = []
-    for name, (term, weeks, multiplier) in sma_periods.items():
+    for name, (term, weeks) in sma_periods.items():
         sma = sma_values[name]
-        target_price = sma * multiplier
         timeframe = get_timeframe_range(weeks)
-        signal = "BUY" if price <= target_price else "SELL"
+        # ✅ Standard SMA logic: BUY if price above SMA
+        signal = "BUY" if price > sma else "SELL"
         table_data.append({
             "Signal": signal,
             "SMA": f"{sma_emojis[name]} {name}",
-            "Target": round(target_price, 2),
+            "SMA Value": round(sma, 2),
             "Timeframe": timeframe
         })
 
     df_table = pd.DataFrame(table_data)
-    df_table.reset_index(drop=True, inplace=True)  # Hide row numbers
 
     # Style BUY/SELL
     def color_signal(val):
@@ -208,9 +205,8 @@ def sma_signal_table():
             return "color: red; font-weight: bold"
         return ""
 
-    st.dataframe(
-        df_table.style.map(color_signal, subset=["Signal"])
-    )
+    st.dataframe(df_table.style.map(color_signal, subset=["Signal"]))
+
 
 def display_unified_confidence_score(df, price=None):
     """

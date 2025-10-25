@@ -263,11 +263,11 @@ def getfng():
 
     with fng3Col:
         st.markdown("[FOMC Rate Moves](https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.htmlwatch-tool.html)")
-        df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
-        scores = display_unified_confidence_score(df)
         sma_signal_table()
 
     with fng4Col:
+        df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
+        scores = display_unified_confidence_score(df)
         get_coinbase_app_rank()
         btc_weekly_dashboard_complete()
 
