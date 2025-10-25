@@ -8,21 +8,21 @@ from st_copy_to_clipboard import st_copy_to_clipboard
 
 cmc_api_key = 'fcf7ee51-af70-4614-821a-f253d1f0d7da'  # CoinMarketCap API key
 
-def gpt_prompt_copy(txt_file, placeholder, coin_list):
+def gpt_prompt_copy(txt_file, placeholder, replacement, name="", key_suffix="", show_text=False):
     try:
-        with open(txt_file, "r", encoding="utf-8") as file:
-            file_content = file.read()
-
-        unique_key = f"coin_list_copy_{hash(coin_list)}"
-
-        updated_content = file_content.replace(placeholder, coin_list)
-        st_copy_to_clipboard(updated_content, key=unique_key)
-
+        updated_content = open(txt_file, encoding="utf-8").read().replace(placeholder, replacement)
+        st_copy_to_clipboard(
+            updated_content,
+            before_copy_label=f"📋 {name}" if name else "Copy Prompt",
+            after_copy_label="✅ Text copied!",
+            show_text=show_text,
+            key=f"copy_{hash(replacement)}_{key_suffix}"
+        )
     except Exception as e:
-        st.error(f"An error occurred while copying to clipboard: {e}")
+        st.error(f"Error copying to clipboard: {e}")
 
 def gpt_prompt_copy_msg(prefixMsg, suffixMsg, coin_list):
-    st_copy_to_clipboard(str(prefixMsg) + str(coin_list) + str(suffixMsg))
+    st_copy_to_clipboard(str(prefixMsg) + str(coin_list) + str(suffixMsg), before_copy_label="Copy Prompt", after_copy_label="✅ Text copied!")
 
 # https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false
 @st.cache_data(show_spinner=False)

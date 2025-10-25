@@ -3,6 +3,7 @@ from content import *
 from streamlit_option_menu import option_menu
 from pathlib import Path
 from TA import *
+from unitTrust import *
 
 # Convert PNG to JPEG properly
 img = Image.open("images/bitcoin.png").convert("RGB")
@@ -34,8 +35,8 @@ live_market_ticker()
 def main():
     selected = option_menu(
         menu_title=None,
-        options=["Investing", "Trading", "Coin Analyzer"],
-        icons=["graph-up-arrow", "bar-chart", "coin"],
+        options=["Investing", "Trading", "Coin Analyzer", "Unit Trust"],
+        icons=["graph-up-arrow", "bar-chart", "coin", "piggy-bank-fill"],
         menu_icon="cast",
         default_index=0,
         orientation="horizontal"
@@ -51,6 +52,13 @@ def main():
     elif selected == "Coin Analyzer":
         selected_coins = get_coin_table()
         getcontent(selected_coins)
+    elif selected == "Unit Trust":
+        funds_list = [
+            {"name": "Allianz Global Investors Fund - Allianz Income And Growth Am", "url": "https://www.investing.com/funds/allianz-income-growth-am-h2-technical"},
+            {"name": "Pimco Gis Income Fund Administrative Sgd (hedged) Income", "url": "https://www.investing.com/funds/ie00b91rq825-technical"}
+        ]
+
+        unitTrustList(funds_list)
 
 if __name__ == "__main__":
     main()
