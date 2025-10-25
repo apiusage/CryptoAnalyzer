@@ -263,15 +263,9 @@ def getfng():
 
     with fng3Col:
         st.markdown("[FOMC Rate Moves](https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.htmlwatch-tool.html)")
-        st.markdown("[Maintenance Cut or Recessionary Cut](https://www.youtube.com/watch?v=f9qPbjgFUj4)")
-        st.markdown("""
-                    - **0-25**: Extreme Fear (Market pessimism, buying opportunities for the long-term).
-                    - **26-50**: Fear (Investor caution, potential opportunities in undervalued assets).
-                    - **51-75**: Greed (Optimism, but market may be overheated. Consider profits or hedging).
-                    - **76-100**: Extreme Greed / Euphoria (Bubble territory, extreme caution advised).
-                    """)
         df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
         scores = display_unified_confidence_score(df)
+        sma_signal_table()
 
     with fng4Col:
         get_coinbase_app_rank()
@@ -626,6 +620,7 @@ def get_footer_data():
             ("Treasury Bond - IEI 3-7 yr (1W)", "https://www.tradingview.com/chart/?symbol=NASDAQ%3AIEI"),
             ("Corporate Bond - LQD (1W)", "https://www.tradingview.com/chart/?symbol=AMEX%3ALQD"),
             ("PTY (1W)", "https://www.tradingview.com/chart/?symbol=NYSE%3APTY"),
+            ("Maintenance Cut or Recessionary Cut", "https://www.youtube.com/watch?v=f9qPbjgFUj4")
         ])
 
         # Stock market

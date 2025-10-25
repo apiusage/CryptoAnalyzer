@@ -14,96 +14,92 @@ def get_technicals_stats(coin_symbol):
 
 # https://cointelegraph.com/news/john-bollinger-says-to-pay-attention-soon-as-big-move-could-be-imminent
 def btc_weekly_dashboard_complete():
-    # Fetch BTC weekly data
+    # --- Fetch BTC weekly data ---
     df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
+    if df.empty or 'Close' not in df.columns:
+        st.error("Error fetching BTC data or 'Close' column missing.")
+        return
 
-    # Latest price
-    price = float(df['Close'].iloc[-1].item())
+    # --- Ensure Close is 1D numeric ---
+    close_series = df['Close']
+    if isinstance(close_series, pd.DataFrame):
+        close_series = close_series.iloc[:, 0]
+    close_series = pd.to_numeric(close_series, errors='coerce')
+    price = close_series.iloc[-1].item()
 
-    # ---
-    # 1️⃣ Moving Averages
-    sma50 = float(df['Close'].rolling(50).mean().iloc[-1].item())
-    sma200 = float(df['Close'].rolling(200).mean().iloc[-1].item())
+    # --- SMA Configuration ---
+    sma_periods = {"SMA9": 9, "SMA20": 20, "SMA50": 50, "SMA200": 200}
+    sma_values = {}
+    for name, weeks in sma_periods.items():
+        sma_series = close_series.rolling(weeks).mean().dropna()
+        if len(sma_series) < 2:
+            last_val = price
+        else:
+            last_val = sma_series.iloc[-1].item()
+        sma_values[name] = last_val
+
+    # --- Death/Golden Cross Logic ---
+    sma50, sma200 = sma_values['SMA50'], sma_values['SMA200']
     pct_diff = (sma50 - sma200) / sma200 * 100
     threshold = 2
+    if sma50 < sma200 and abs(pct_diff) <= threshold:
+        trend_msg = "⚠️ Near Death Cross (Bearish)"
+    elif sma50 < sma200:
+        trend_msg = "💀 Death Cross (Bearish)"
+    elif abs(pct_diff) <= threshold:
+        trend_msg = "⚠️ Near Golden Cross (Bullish)"
+    else:
+        trend_msg = "🌟 Golden Cross (Bullish)"
+    st.markdown(f"**📈 Trend:** {trend_msg}")
 
-    st.markdown("**📈 Trend:** " + (
-        "⚠️ Near Death Cross (bearish warning)" if sma50 < sma200 and abs(pct_diff) <= threshold else
-        "💀 Death Cross — trend is bearish" if sma50 < sma200 else
-        "⚠️ Near Golden Cross (bullish warning)" if abs(pct_diff) <= threshold else
-        "🌟 Golden Cross — trend is bullish"
-    ))
+    # --- Bollinger Bands ---
+    ma20 = close_series.rolling(20).mean().iloc[-1].item()
+    std20 = close_series.rolling(20).std().iloc[-1].item()
+    bandwidth = 4 * std20 / ma20 * 100
+    st.markdown("**⚡ Volatility:** " + ("Low — market quiet" if bandwidth < 10 else f"Normal ({bandwidth:.2f}%)"))
 
-    st.markdown("**🟡 50-week SMA:** " +
-                ("Near price — buying zone" if price <= sma50 * 1.01 else "Above price — trend healthy"))
-    st.markdown("**🟠 200-week SMA:** " +
-                ("Near price — strong support" if price <= sma200 * 1.05 else "Above price — long-term bullish"))
-
-    # ---
-    # 2️⃣ Bollinger Bands (volatility)
-    ma20 = df['Close'].rolling(20).mean().iloc[-1].item()
-    std20 = df['Close'].rolling(20).std().iloc[-1].item()
-    bandwidth = float((ma20 + 2*std20 - (ma20 - 2*std20)) / ma20 * 100)
-
-    st.markdown("**⚡ Volatility:** " + (
-        "Low — market quiet" if bandwidth < 10 else f"Normal ({bandwidth:.2f}%)"
-    ))
-
-    # ---
-    # 3️⃣ ATR (14-week)
+    # --- ATR (14-week) ---
     high, low, close = df['High'], df['Low'], df['Close']
-    tr = pd.concat([
-        high - low,
-        (high - close.shift(1)).abs(),
-        (low - close.shift(1)).abs()
-    ], axis=1).max(axis=1)
-    atr = float(tr.rolling(14).mean().iloc[-1].item())
+    tr = pd.concat([high - low, (high - close.shift(1)).abs(), (low - close.shift(1)).abs()], axis=1).max(axis=1)
+    atr = tr.rolling(14).mean().iloc[-1].item()
     st.markdown("**📏 ATR:** " + (
         "High — very volatile" if atr > price*0.05 else
         "Low — quiet market" if atr < price*0.02 else
         "Moderate — normal weekly moves"
     ))
 
-    # ---
-    # 4️⃣ RSI (14-week)
+    # --- RSI (14-week) ---
     delta = close.diff()
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
-    avg_gain = float(gain.rolling(14).mean().iloc[-1].item())
-    avg_loss = float(loss.rolling(14).mean().iloc[-1].item())
-    rs = avg_gain / avg_loss if avg_loss != 0 else 100
-    rsi = 100 - (100 / (1 + rs))
-    rsi_val = float(rsi)
-
+    avg_gain = gain.rolling(14).mean().iloc[-1].item()
+    avg_loss = loss.rolling(14).mean().iloc[-1].item()
+    rs = avg_gain / avg_loss if avg_loss != 0 else float('inf')
+    rsi_val = 100 - (100 / (1 + rs))
     st.markdown("**📊 RSI:** " + (
         "Overbought — possible pullback" if rsi_val > 70 else
         "Oversold — possible rebound" if rsi_val < 30 else
         "Normal"
     ))
 
-    # ---
-    # 5️⃣ Weekly Volume
-    latest_vol = float(df['Volume'].iloc[-1].item())
-    avg_vol50 = float(df['Volume'].rolling(50).mean().iloc[-1].item())
+    # --- Weekly Volume ---
+    latest_vol = df['Volume'].iloc[-1].item()
+    avg_vol50 = df['Volume'].rolling(50).mean().iloc[-1].item()
     st.markdown("**📈 Volume:** " + (
         "High — strong market activity" if latest_vol > avg_vol50 * 1.5 else
         "Low — weak activity" if latest_vol < avg_vol50 * 0.7 else
         "Normal — market stable"
     ))
 
-    # ---
-    # 6️⃣ Big Movement Warning
-    big_move = False
-    if bandwidth < 10 and atr > price*0.03 and latest_vol > avg_vol50 * 1.2:
-        big_move = True
+    # --- Big Movement Warning ---
+    big_move = bandwidth < 10 and atr > price*0.03 and latest_vol > avg_vol50 * 1.2
 
-    # MACD values
-    macd_short = df['Close'].ewm(span=12).mean()
-    macd_long = df['Close'].ewm(span=26).mean()
+    # --- MACD ---
+    macd_short = close.ewm(span=12).mean()
+    macd_long = close.ewm(span=26).mean()
     macd = macd_short - macd_long
-    signal = macd.ewm(span=9).mean()
-    macd_val = float(macd.iloc[-1].item())
-    signal_val = float(signal.iloc[-1].item())
+    signal_line = macd.ewm(span=9).mean()
+    macd_val, signal_val = macd.iloc[-1].item(), signal_line.iloc[-1].item()
 
     if macd_val > signal_val and price > sma50:
         direction = "bullish 📈"
@@ -117,47 +113,104 @@ def btc_weekly_dashboard_complete():
     else:
         st.markdown("**ℹ️ No big movement expected soon**")
 
-    # ---
-    # 7️⃣ Enhanced Momentum + Volume Detector (RSI + MACD + MFI)
-    # Money Flow Index (MFI)
+    # --- Enhanced Momentum + Volume Detector ---
     typical_price = (df['High'] + df['Low'] + df['Close']) / 3
     money_flow = typical_price * df['Volume']
     pos_flow = money_flow.where(typical_price > typical_price.shift(1), 0.0)
     neg_flow = money_flow.where(typical_price < typical_price.shift(1), 0.0)
-
-    pos_sum = float(pos_flow.rolling(14).sum().iloc[-1].item())
-    neg_sum = float(neg_flow.rolling(14).sum().iloc[-1].item())
+    pos_sum = pos_flow.rolling(14).sum().iloc[-1].item()
+    neg_sum = neg_flow.rolling(14).sum().iloc[-1].item()
     mfr = pos_sum / neg_sum if neg_sum != 0 else 0
-    mfi = 100 - (100 / (1 + mfr))
-    mfi_val = float(mfi)
+    mfi_val = 100 - (100 / (1 + mfr))
 
-    # Weighted detector
-    rsi_weight = 0.4
-    macd_weight = 0.4
-    mfi_weight = 0.2
-
-    # Normalize scores
+    # --- Weighted Momentum Score (safe exp) ---
     rsi_score = rsi_val / 100
-
-    # --- Use stable sigmoid to prevent overflow
-    def stable_sigmoid(x):
-        x = np.clip(x, -50, 50)
-        return 1 / (1 + np.exp(-x))
-
-    macd_score = stable_sigmoid(macd_val - signal_val)
+    diff = macd_val - signal_val
+    if abs(diff) > 700:  # prevent overflow
+        macd_score = 1.0 if diff > 0 else 0.0
+    else:
+        macd_score = 1 / (1 + np.exp(-diff))
     mfi_score = mfi_val / 100
+    momentum_score = rsi_score*0.4 + macd_score*0.4 + mfi_score*0.2
 
-    momentum_score = rsi_score*rsi_weight + macd_score*macd_weight + mfi_score*mfi_weight
-
-    bullish_threshold = 0.6
-    bearish_threshold = 0.4
-
-    if momentum_score >= bullish_threshold:
+    if momentum_score >= 0.6:
         st.markdown("**🚀 Enhanced Detector:** Bullish — momentum and volume strongly confirm upside.")
-    elif momentum_score <= bearish_threshold:
+    elif momentum_score <= 0.4:
         st.markdown("**⚰️ Enhanced Detector:** Bearish — downside pressure is significant.")
     else:
         st.markdown("**⚖️ Enhanced Detector:** Neutral — mixed momentum, unclear volume trends.")
+
+
+def sma_signal_table():
+    # --- Fetch BTC weekly data ---
+    df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
+    if df.empty or 'Close' not in df.columns:
+        st.error("Error fetching BTC data.")
+        return
+
+    close_series = df['Close']
+    price = close_series.iloc[-1].item()
+
+    st.markdown(f"**💰 Current Price:** {price:.2f}")
+
+    sma_periods = {
+        "SMA9": ("Short-term", 9, 1.01),
+        "SMA20": ("Short-term", 20, 1.01),
+        "SMA50": ("Medium-term", 50, 1.01),
+        "SMA200": ("Long-term", 200, 1.05)
+    }
+
+    # Convert weeks to readable timeframe
+    def get_timeframe_range(weeks):
+        if weeks < 4:
+            return f"~{weeks * 7} days"
+        elif weeks < 52:
+            min_months = round(weeks / 4.5)
+            max_months = round(weeks / 4)
+            return f"{min_months}-{max_months} months"
+        else:
+            years = weeks / 52
+            return f"~{round(years, 1)} years"
+
+    sma_values, sma_directions = {}, {}
+    for name, (term, weeks, multiplier) in sma_periods.items():
+        sma_series = close_series.rolling(weeks).mean().dropna()
+        if len(sma_series) < 2:
+            last_val = sma_series.iloc[-1].item() if len(sma_series) else price
+        else:
+            last_val = sma_series.iloc[-1].item()
+        sma_values[name] = last_val
+
+    sma_emojis = {"SMA9": "🔹", "SMA20": "🔸", "SMA50": "🟡", "SMA200": "🟠"}
+
+    # Build table data
+    table_data = []
+    for name, (term, weeks, multiplier) in sma_periods.items():
+        sma = sma_values[name]
+        target_price = sma * multiplier
+        timeframe = get_timeframe_range(weeks)
+        signal = "BUY" if price <= target_price else "SELL"
+        table_data.append({
+            "Signal": signal,
+            "SMA": f"{sma_emojis[name]} {name}",
+            "Target": round(target_price, 2),
+            "Timeframe": timeframe
+        })
+
+    df_table = pd.DataFrame(table_data)
+    df_table.reset_index(drop=True, inplace=True)  # Hide row numbers
+
+    # Style BUY/SELL
+    def color_signal(val):
+        if val == "BUY":
+            return "color: green; font-weight: bold"
+        elif val == "SELL":
+            return "color: red; font-weight: bold"
+        return ""
+
+    st.dataframe(
+        df_table.style.map(color_signal, subset=["Signal"])
+    )
 
 def display_unified_confidence_score(df, price=None):
     """
