@@ -9,17 +9,14 @@ from FA import *
 
 PROMPT_DIR = "prompts/"
 
-
 def get_prompt_path(filename):
     return f"{PROMPT_DIR}{filename}"
-
 
 def sticky_scroll_to_top():
     st.markdown("<a id='top'></a>", unsafe_allow_html=True)
     with open("style.css") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     st.markdown('<a href="#top" id="scrollTopBtn">⬆️</a>', unsafe_allow_html=True)
-
 
 @st.cache_data(ttl=300)
 def get_coin_data_cached():
@@ -36,11 +33,9 @@ def get_coin_data_cached():
         raise ValueError("⚠️ API returned no data. Please refresh.")
     return data
 
-
 def deduplicate_coins(coins):
     seen = set()
     return [c for c in coins if (sym := c.get("symbol", "").upper()) not in seen and not seen.add(sym)]
-
 
 def get_coin_table():
     # Initialize data
@@ -125,7 +120,6 @@ def get_coin_table():
 
     return selected_coins
 
-
 def getcontent(selected_coins):
     if not selected_coins:
         st.info("👉 Select coins and click Start Analysis.")
@@ -180,23 +174,26 @@ def getcontent(selected_coins):
                 price_vs_atl(coin["current_price"], coin["atl"])
                 liquidity_to_supply_ratio(coin["total_volume"], coin["circulating_supply"])
 
-
 def getfng():
     cols = st.columns(4)
 
     with cols[0]:
         df = fetch_fng("alternative_me")
-        st.success(f"**FnG (alternative.me): {df.iloc[0, 1]}**")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.image("https://alternative.me/crypto/fear-and-greed-index.png")
-        with c2:
-            st.line_chart(df.set_index('Date'))
+        if not df.empty:
+            current_value = df.iloc[0, 1]
+            st.success(f"**FnG (alternative.me): {current_value} ({fng_label(current_value)})**")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.image("https://alternative.me/crypto/fear-and-greed-index.png")
+            with c2:
+                st.line_chart(df.set_index('Date'))
 
     with cols[1]:
         df = fetch_fng("coinmarketcap")
-        st.success(f"**FnG (CMC): {df.iloc[0, 1]}**")
-        st.line_chart(df.set_index('Date'))
+        if not df.empty:
+            current_value = df.iloc[0, 1]
+            st.success(f"**FnG (CMC): {current_value} ({fng_label(current_value)})**")
+            st.line_chart(df.set_index('Date'))
 
     with cols[2]:
         st.markdown("[FOMC Rate Moves](https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html)")
@@ -207,7 +204,6 @@ def getfng():
         display_unified_confidence_score(df)
         get_coinbase_app_rank()
         btc_weekly_dashboard_complete()
-
 
 def show_iframes(pairs=None, singles=None):
     if singles:
@@ -222,7 +218,6 @@ def show_iframes(pairs=None, singles=None):
                 components.html(f'<iframe src="{l}" width=100% height="800" style="border:none"></iframe>', height=800)
             with c2:
                 components.html(f'<iframe src="{r}" width=100% height="800" style="border:none"></iframe>', height=800)
-
 
 def topIndicatorInfo():
     col1, col2, col3 = st.columns(3)
@@ -259,7 +254,6 @@ def topIndicatorInfo():
         - **Company BTC cost** – company BTC holdings
         """)
 
-
 def get_investing_data():
     topIndicatorInfo()
 
@@ -292,7 +286,6 @@ def get_investing_data():
         with col:
             components.html(embedTradingViewChart(f"CRYPTOCAP:{chart}|1M"), height=450)
 
-
 def get_trading_data():
     col1, col2 = st.columns(2)
     with col1:
@@ -316,7 +309,6 @@ def get_trading_data():
         ("https://www.coinglass.com/pro/futures/TimeZoneDistribution", "https://www.coinglass.com/TopTrader/Binance")
     ])
 
-
 def get_latest_shiller_pe():
     try:
         r = requests.get("https://www.multpl.com/shiller-pe", timeout=5)
@@ -329,7 +321,6 @@ def get_latest_shiller_pe():
     except:
         return "N/A"
 
-
 def indicator_guide(items):
     html = "<ul style='padding-left:18px;margin:0;'>"
     for label, desc, bg, fg in items:
@@ -338,14 +329,12 @@ def indicator_guide(items):
     html += "</ul>"
     st.markdown(html, unsafe_allow_html=True)
 
-
 def alert_box(msg, url, label="Learn more"):
     st.markdown(f"""
     <div style="padding:10px;background:#d4edda;color:#155724;border-radius:5px;">
         📢 {msg} = <a href="{url}" target="_blank" style="color:#155724;text-decoration:underline;">{label}</a>
     </div>
     """, unsafe_allow_html=True)
-
 
 def get_footer_data():
     cols = st.columns(3)

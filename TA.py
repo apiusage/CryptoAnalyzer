@@ -6,11 +6,9 @@ from bs4 import BeautifulSoup
 import numpy as np
 import warnings
 
-
 def get_technicals_stats(coin_symbol):
     url = f"https://www.tradingview.com/symbols/{coin_symbol}/technicals/"
     st.markdown(f'[View Tradingview Technicals for {coin_symbol}]({url})')
-
 
 def btc_weekly_dashboard_complete():
     df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
@@ -94,7 +92,6 @@ def btc_weekly_dashboard_complete():
     st.markdown(f"**{'🚀' if score >= 0.6 else '⚰️' if score <= 0.4 else '⚖️'} Enhanced Detector:** "
                 f"{'Bullish — strong upside' if score >= 0.6 else 'Bearish — downside pressure' if score <= 0.4 else 'Neutral — mixed signals'}")
 
-
 def sma_signal_table():
     df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
     if df.empty:
@@ -139,7 +136,6 @@ def sma_signal_table():
             v: "color: green; font-weight: bold" if v == "BUY" else "color: red; font-weight: bold" if v == "SELL" else "",
         subset=["Signal"]
     ))
-
 
 def display_unified_confidence_score(df, price=None):
     if price is None:
@@ -200,7 +196,6 @@ def display_unified_confidence_score(df, price=None):
     return {"score": score, "trend": trend_s, "momentum": momentum_s,
             "volume": volume_s, "volatility": volatility_s, "rsi": rsi,
             "macd": macd.iloc[-1].item(), "mfi": mfi, "atr": atr}
-
 
 def get_coinbase_app_rank():
     try:

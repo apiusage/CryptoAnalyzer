@@ -24,14 +24,12 @@ def gpt_prompt_copy_msg(prefix, suffix, coin_list):
                          before_copy_label="Copy Prompt",
                          after_copy_label="✅ Text copied!")
 
-
 @st.cache_data(show_spinner=False)
 def get_coin_data():
     return requests.get("https://api.coingecko.com/api/v3/coins/markets", params={
         'vs_currency': 'usd', 'order': 'market_cap_desc',
         'per_page': 200, 'page': 1, 'sparkline': 'false'
     })
-
 
 @st.cache_data(show_spinner=False)
 def get_coin_categories():
@@ -42,7 +40,6 @@ def get_coin_categories():
             coin_to_cat.setdefault(coin_id, []).append(cat.get("name"))
     return coin_to_cat
 
-
 def get_coin_creation_date(coin_id):
     r = requests.get(f"https://api.coingecko.com/api/v3/coins/{coin_id}")
     if r.status_code == 200:
@@ -51,33 +48,47 @@ def get_coin_creation_date(coin_id):
     else:
         st.error(f"Error: {r.status_code}")
 
+# --- Helper: label + emoji for index value ---
+def fng_label(value: int):
+    if value <= 24:
+        return "😱 Extreme Fear"
+    elif value <= 49:
+        return "😟 Fear"
+    elif value <= 74:
+        return "🙂 Greed"
+    else:
+        return "🤯 Extreme Greed"
 
+# --- Fetch Function ---
 def fetch_fng(api_source):
     def process(data):
         timestamps = [int(e['timestamp']) for e in data]
-        values = [e['value'] for e in data]
+        values = [int(float(e['value'])) for e in data]
         dates = [datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S') for ts in timestamps]
-        return pd.DataFrame({'Date': pd.to_datetime(dates), 'Fear and Greed Index': pd.to_numeric(values)})
+        return pd.DataFrame({'Date': pd.to_datetime(dates), 'Fear and Greed Index': values})
 
     if api_source == "alternative_me":
         data = requests.get("https://api.alternative.me/fng/?limit=20").json()['data']
         return process(data)
 
     elif api_source == "coinmarketcap":
-        r = requests.get("https://pro-api.coinmarketcap.com/v3/fear-and-greed/historical",
-                         headers={'X-CMC_PRO_API_KEY': CMC_API_KEY, 'Accept': 'application/json'},
-                         params={'limit': 30, 'convert': 'USD'})
+        r = requests.get(
+            "https://pro-api.coinmarketcap.com/v3/fear-and-greed/historical",
+            headers={'X-CMC_PRO_API_KEY': CMC_API_KEY, 'Accept': 'application/json'},
+            params={'limit': 30, 'convert': 'USD'}
+        )
         if r.status_code == 200:
             return process(r.json()['data'])
-        st.error(f"Error: {r.status_code}")
+        else:
+            st.error(f"Error: {r.status_code}")
+            return pd.DataFrame()
     else:
         st.error("Invalid API source")
-
+        return pd.DataFrame()
 
 def get_google_trends(coin_name, language="en"):
     url = f"https://trends.google.com/trends/explore?&q={urllib.parse.quote(coin_name)}&hl={language}"
     st.markdown(f'[View Google Trends for {coin_name}]({url})')
-
 
 def classify_market_cap(mcap):
     msg = ("Nano Cap - < $1M" if mcap < 1_000_000 else
@@ -85,7 +96,6 @@ def classify_market_cap(mcap):
            "Small Cap - $10M-$100M" if mcap < 100_000_000 else
            "Large Cap - > $100M")
     st.success(msg)
-
 
 def calculate_vol_mcap_ratio(mcap, vol):
     ratio = vol / mcap if mcap else 0
@@ -98,7 +108,6 @@ def calculate_vol_mcap_ratio(mcap, vol):
         st.markdown("- **Moderate Ratio** (>1%): Moderate liquidity, stable coin")
     else:
         st.markdown("- **Low Ratio**: Limited trading, low liquidity\n- Risk of price slippage")
-
 
 def check_increased_trading_volume(coin_symbol):
     try:
@@ -118,13 +127,11 @@ def check_increased_trading_volume(coin_symbol):
     except Exception as e:
         st.error(f"Error: {e}")
 
-
 def liquidity_to_supply_ratio(vol_24h, circ_supply):
     ratio = vol_24h / circ_supply if circ_supply else 0
     st.success("Liquidity to Supply Ratio")
     st.metric("Liquidity to Supply Ratio", f"{ratio:.4f}", border=True)
     st.write("High liquidity" if ratio > 1 else "Low liquidity")
-
 
 def price_vs_ath(price, ath):
     pct = ((price - ath) / ath) * 100
@@ -136,7 +143,6 @@ def price_vs_ath(price, ath):
     else:
         st.write(f"**{abs(pct):.2f}% below ATH** - Room for recovery or weaker interest")
 
-
 def price_vs_atl(price, atl):
     pct = ((price - atl) / atl) * 100
     st.success("Price vs ATL (All-Time Low)")
@@ -146,7 +152,6 @@ def price_vs_atl(price, atl):
         st.write(f"**{pct:.2f}% above ATL** - Significant recovery, long-term growth potential")
     else:
         st.write(f"**{abs(pct):.2f}% below ATL** - Extreme bearish, high risk")
-
 
 def fdv_vs_market_cap(fdv, mcap):
     ratio = fdv / mcap if mcap else 0
@@ -160,7 +165,6 @@ def fdv_vs_market_cap(fdv, mcap):
     else:
         st.markdown("- **<1**: Unusual, possible miscalculation")
 
-
 def circulating_supply_vs_total_supply(circ, total):
     ratio = circ / total if total else 0
     st.success("Circulating Supply vs Total Supply")
@@ -171,10 +175,8 @@ def circulating_supply_vs_total_supply(circ, total):
     else:
         st.write("✅ Almost all tokens circulating, low dilution risk")
 
-
 def get_tokenomist_stats(coin_id):
     st.markdown(f'[View Tokenomist for {coin_id}](https://tokenomist.ai/{coin_id})')
-
 
 def embedTradingViewChart(coin_symbol):
     symbol = coin_symbol.split('|')[0]
