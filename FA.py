@@ -41,12 +41,26 @@ def get_coin_categories():
     return coin_to_cat
 
 def get_coin_creation_date(coin_id):
-    r = requests.get(f"https://api.coingecko.com/api/v3/coins/{coin_id}")
+    """Fetch and display the creation (genesis) date of a cryptocurrency from CoinGecko."""
+    url = f"https://api.coingecko.com/api/v3/coins/{coin_id}"
+    r = requests.get(url)
+
     if r.status_code == 200:
-        date = r.json().get('genesis_date', 'Not available')
-        st.metric("Creation Date", date, border=True)
+        date = r.json().get('genesis_date', None)
+        if date:
+            st.metric("Creation Date", date, border=True)
+        else:
+            st.warning("⚠️ Creation date not provided by CoinGecko.")
     else:
-        st.error(f"Error: {r.status_code}")
+        # --- Friendly error messages ---
+        if r.status_code == 404:
+            st.error("❌ Coin not found (invalid coin ID).")
+        elif r.status_code == 429:
+            st.error("⏳ Too many requests — please wait a bit and try again.")
+        elif r.status_code >= 500:
+            st.error("⚠️ CoinGecko server error. Try again later.")
+        else:
+            st.error(f"⚠️ Unexpected error (HTTP {r.status_code}).")
 
 # --- Helper: label + emoji for index value ---
 def fng_label(value: int):
@@ -110,22 +124,50 @@ def calculate_vol_mcap_ratio(mcap, vol):
         st.markdown("- **Low Ratio**: Limited trading, low liquidity\n- Risk of price slippage")
 
 def check_increased_trading_volume(coin_symbol):
+    """Check if trading volume increased over the past 2 days and show clear messages."""
     try:
         st.success("Trading Volume")
-        data = requests.get(
-            f'https://api.coingecko.com/api/v3/coins/{coin_symbol}/market_chart?vs_currency=usd&days=2').json()
 
-        vol_now = data['total_volumes'][1][1]
+        url = f"https://api.coingecko.com/api/v3/coins/{coin_symbol}/market_chart?vs_currency=usd&days=2"
+        r = requests.get(url)
+
+        # --- Handle status codes clearly ---
+        if r.status_code == 404:
+            st.error("❌ Coin not found — please check the symbol (e.g., 'bitcoin', 'ethereum').")
+            return
+        elif r.status_code == 429:
+            st.error("⏳ Too many requests — CoinGecko rate limit reached. Try again in a minute.")
+            return
+        elif r.status_code >= 500:
+            st.error("⚠️ CoinGecko server error. Please try again later.")
+            return
+        elif r.status_code != 200:
+            st.error(f"⚠️ Unexpected response (HTTP {r.status_code}).")
+            return
+
+        data = r.json()
+
+        # --- Validate data ---
+        if 'total_volumes' not in data or len(data['total_volumes']) < 2:
+            st.warning("⚠️ Insufficient volume data available for this coin.")
+            return
+
+        vol_now = data['total_volumes'][-1][1]
         vol_prev = data['total_volumes'][0][1]
         vol_inc = ((vol_now - vol_prev) / vol_prev * 100) if vol_prev else 0
 
-        pump_msg = ("likely to last (significant volume)" if vol_inc > 50 else
-                    "could last (moderate volume)" if vol_inc > 20 else
-                    "may be short-lived (low volume)")
+        pump_msg = (
+            "likely to last (🚀 significant volume)" if vol_inc > 50 else
+            "could last (📈 moderate volume)" if vol_inc > 20 else
+            "may be short-lived (💤 low volume)"
+        )
 
-        st.write(f"Volume {'increased' if vol_inc > 0 else 'unchanged'} by **{vol_inc:.2f}%** - Pump/dump {pump_msg}")
+        st.write(f"Volume {'increased' if vol_inc > 0 else 'unchanged'} by **{vol_inc:.2f}%** — Pump/dump {pump_msg}")
+
+    except requests.exceptions.RequestException:
+        st.error("🌐 Network error — please check your internet connection or try again later.")
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"⚠️ Unexpected error: {e}")
 
 def liquidity_to_supply_ratio(vol_24h, circ_supply):
     ratio = vol_24h / circ_supply if circ_supply else 0
