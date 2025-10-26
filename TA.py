@@ -101,7 +101,7 @@ def sma_signal_table():
     close = df['Close'].squeeze() if isinstance(df['Close'], pd.DataFrame) else df['Close']
     price = close.iloc[-1].item()
 
-    st.markdown(f"**💰 Current Price:** ${price:,.0f}")  # <- whole number price
+    st.markdown(f"**💰 Current Price:** ${price:.0f}")
     st.markdown("Price > SMA → BUY (bullish) | Price < SMA → SELL (bearish)")
 
     def timeframe(weeks):
