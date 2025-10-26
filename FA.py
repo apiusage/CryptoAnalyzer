@@ -1,300 +1,193 @@
-# Whitepaper, Tokenomics, Team, Market Sentiment
 import streamlit as st
 import requests
-import urllib
+import urllib.parse
 import pandas as pd
 from datetime import datetime
 from st_copy_to_clipboard import st_copy_to_clipboard
 
-cmc_api_key = 'fcf7ee51-af70-4614-821a-f253d1f0d7da'  # CoinMarketCap API key
+CMC_API_KEY = 'fcf7ee51-af70-4614-821a-f253d1f0d7da'
 
 def gpt_prompt_copy(txt_file, placeholder, replacement, name="", key_suffix="", show_text=False):
     try:
-        updated_content = open(txt_file, encoding="utf-8").read().replace(placeholder, replacement)
-        st_copy_to_clipboard(
-            updated_content,
-            before_copy_label=f"📋 {name}" if name else "Copy Prompt",
-            after_copy_label="✅ Text copied!",
-            show_text=show_text,
-            key=f"copy_{hash(replacement)}_{key_suffix}"
-        )
+        content = open(txt_file, encoding="utf-8").read().replace(placeholder, replacement)
+        st_copy_to_clipboard(content,
+                             before_copy_label=f"📋 {name}" if name else "Copy Prompt",
+                             after_copy_label="✅ Text copied!",
+                             show_text=show_text,
+                             key=f"copy_{hash(replacement)}_{key_suffix}")
     except Exception as e:
-        st.error(f"Error copying to clipboard: {e}")
+        st.error(f"Error: {e}")
 
-def gpt_prompt_copy_msg(prefixMsg, suffixMsg, coin_list):
-    st_copy_to_clipboard(str(prefixMsg) + str(coin_list) + str(suffixMsg), before_copy_label="Copy Prompt", after_copy_label="✅ Text copied!")
 
-# https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false
+def gpt_prompt_copy_msg(prefix, suffix, coin_list):
+    st_copy_to_clipboard(f"{prefix}{coin_list}{suffix}",
+                         before_copy_label="Copy Prompt",
+                         after_copy_label="✅ Text copied!")
+
+
 @st.cache_data(show_spinner=False)
 def get_coin_data():
-    url = "https://api.coingecko.com/api/v3/coins/markets"
-    params = {
-        'vs_currency': 'usd',
-        'order': 'market_cap_desc',
-        'per_page': 200,
-        'page': 1,
-        'sparkline': 'false'
-    }
-    return requests.get(url, params=params)  # return raw response
+    return requests.get("https://api.coingecko.com/api/v3/coins/markets", params={
+        'vs_currency': 'usd', 'order': 'market_cap_desc',
+        'per_page': 200, 'page': 1, 'sparkline': 'false'
+    })
+
 
 @st.cache_data(show_spinner=False)
 def get_coin_categories():
-    url = "https://api.coingecko.com/api/v3/coins/categories"
-    response = requests.get(url)
-    categories = response.json()
-
-    coin_to_categories = {}
+    categories = requests.get("https://api.coingecko.com/api/v3/coins/categories").json()
+    coin_to_cat = {}
     for cat in categories:
-        name = cat.get("name")
-        top_ids = cat.get("top_3_coins_id", [])
-        for coin_id in top_ids:
-            coin_to_categories.setdefault(coin_id, []).append(name)
-    return coin_to_categories
+        for coin_id in cat.get("top_3_coins_id", []):
+            coin_to_cat.setdefault(coin_id, []).append(cat.get("name"))
+    return coin_to_cat
+
 
 def get_coin_creation_date(coin_id):
-    url = f"https://api.coingecko.com/api/v3/coins/{coin_id}"
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        coin_data = response.json()
-        creation_date = coin_data.get('genesis_date', 'Not available')
-        st.metric(label="Creation Date", value=creation_date, border=True)
+    r = requests.get(f"https://api.coingecko.com/api/v3/coins/{coin_id}")
+    if r.status_code == 200:
+        date = r.json().get('genesis_date', 'Not available')
+        st.metric("Creation Date", date, border=True)
     else:
-        return f"Error: {response.status_code}"
+        st.error(f"Error: {r.status_code}")
+
 
 def fetch_fng(api_source):
-    # Define the common logic for processing timestamps and values
-    def process_data(data):
-        timestamps = [int(entry['timestamp']) for entry in data]
-        values = [entry['value'] for entry in data]
+    def process(data):
+        timestamps = [int(e['timestamp']) for e in data]
+        values = [e['value'] for e in data]
         dates = [datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S') for ts in timestamps]
         return pd.DataFrame({'Date': pd.to_datetime(dates), 'Fear and Greed Index': pd.to_numeric(values)})
 
     if api_source == "alternative_me":
-        url = "https://api.alternative.me/fng/?limit=20"
-        data = requests.get(url).json()['data']
-        df = process_data(data)
-        return df
+        data = requests.get("https://api.alternative.me/fng/?limit=20").json()['data']
+        return process(data)
 
     elif api_source == "coinmarketcap":
-        url = "https://pro-api.coinmarketcap.com/v3/fear-and-greed/historical"
-        headers = {'X-CMC_PRO_API_KEY': cmc_api_key, 'Accept': 'application/json'}
-        params = {'limit': 30, 'convert': 'USD'}
-        response = requests.get(url, headers=headers, params=params)
-
-        if response.status_code == 200:
-            data = response.json()['data']
-            df = process_data(data)
-            return df
-        else:
-            st.error(f"Error: {response.status_code}")
-
+        r = requests.get("https://pro-api.coinmarketcap.com/v3/fear-and-greed/historical",
+                         headers={'X-CMC_PRO_API_KEY': CMC_API_KEY, 'Accept': 'application/json'},
+                         params={'limit': 30, 'convert': 'USD'})
+        if r.status_code == 200:
+            return process(r.json()['data'])
+        st.error(f"Error: {r.status_code}")
     else:
-        st.error("Invalid API source.")
+        st.error("Invalid API source")
+
 
 def get_google_trends(coin_name, language="en"):
-    # Handle spaces and special characters (eg. add '%20')
-    encoded_coinName = urllib.parse.quote(coin_name)
+    url = f"https://trends.google.com/trends/explore?&q={urllib.parse.quote(coin_name)}&hl={language}"
+    st.markdown(f'[View Google Trends for {coin_name}]({url})')
 
-    trends_url = (
-        f"https://trends.google.com/trends/explore?&q={encoded_coinName}&hl={language}"
-    )
 
-    st.markdown(f'[View Google Trends for {coin_name}]({trends_url})')
+def classify_market_cap(mcap):
+    msg = ("Nano Cap - < $1M" if mcap < 1_000_000 else
+           "Micro Cap - $1M-$10M" if mcap < 10_000_000 else
+           "Small Cap - $10M-$100M" if mcap < 100_000_000 else
+           "Large Cap - > $100M")
+    st.success(msg)
 
-def classify_market_cap(market_cap):
-    if market_cap < 1_000_000:
-        result = "Nano Cap - Market cap is less than $1 million."
-    elif market_cap < 10_000_000:
-        result = "Micro Cap - Market cap is between $1 million and $10 million."
-    elif market_cap < 100_000_000:
-        result = "Small Cap - Market cap is between $10 million and $100 million."
-    else:
-        result = "Large Cap - Market cap is greater than $100 million"
 
-    st.success(result)
-
-def calculate_vol_mcap_ratio(market_cap, total_volume):
-    ratio = total_volume / market_cap if market_cap else 0
-
+def calculate_vol_mcap_ratio(mcap, vol):
+    ratio = vol / mcap if mcap else 0
     st.success("Liquidity and trading activity - >30% = Buy")
-    st.metric(label="Vol. (24h) / MCap Ratio", value=f"{ratio:.4f}", delta=f"{(ratio*100):.2f}%", border=True)
+    st.metric("Vol. (24h) / MCap Ratio", f"{ratio:.4f}", delta=f"{ratio * 100:.2f}%", border=True)
 
-    # Interpretation based on the ratio
     if ratio > 0.1:
-        st.markdown("""
-            - High Ratio (Active Trading, High Liquidity) > 0.1 (10%).
-            - Actively traded relative to its market cap, indicating high liquidity.
-            - Likely popular, well-known, or experiencing a surge due to news or market events.
-            """)
+        st.markdown("- **High Ratio** (>10%): Active trading, high liquidity\n- Popular or experiencing surge")
     elif ratio > 0.01:
-        st.markdown("""
-            - Moderate Ratio (Moderate Activity and Liquidity) > 0.01 (1%)
-            - Moderate liquidity, trading activity, potentially a stable coin.
-            """)
+        st.markdown("- **Moderate Ratio** (>1%): Moderate liquidity, stable coin")
     else:
-        st.markdown("""
-            - Low Ratio (Low Trading Activity, Low Liquidity)
-            - Limited trading activity, low liquidity. Not be as popular or may be held by long-term investors.
-            - Could signal risks of price slippage for large trades.
-            """)
+        st.markdown("- **Low Ratio**: Limited trading, low liquidity\n- Risk of price slippage")
+
 
 def check_increased_trading_volume(coin_symbol):
     try:
-        url = f'https://api.coingecko.com/api/v3/coins/{coin_symbol}/market_chart?vs_currency=usd&days=2'
-
         st.success("Trading Volume")
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an exception if the request failed
-        data = response.json()
+        data = requests.get(
+            f'https://api.coingecko.com/api/v3/coins/{coin_symbol}/market_chart?vs_currency=usd&days=2').json()
 
-        # Extract trading volumes for the last 24 hours
-        volume_24h = data['total_volumes'][1][1]  # Current 24h volume
-        volume_24h_previous = data['total_volumes'][0][1]  # Previous 24h volume
+        vol_now = data['total_volumes'][1][1]
+        vol_prev = data['total_volumes'][0][1]
+        vol_inc = ((vol_now - vol_prev) / vol_prev * 100) if vol_prev else 0
 
-        # Calculate the percentage increase in volume
-        volume_increase = ((volume_24h - volume_24h_previous) / volume_24h_previous * 100) if volume_24h_previous else 0
+        pump_msg = ("likely to last (significant volume)" if vol_inc > 50 else
+                    "could last (moderate volume)" if vol_inc > 20 else
+                    "may be short-lived (low volume)")
 
-        # Determine if the pump is likely to last based on the volume increase
-        if volume_increase > 50:
-            pump_likely = "The pump/dump is likely to last due to a significant increase in trading volume."
-        elif volume_increase > 20:
-            pump_likely = "The pump/dump could last, but further confirmation is needed (moderate volume increase)."
-        else:
-            pump_likely = "The pump/dump may be short-lived, as the volume increase is not very significant."
+        st.write(f"Volume {'increased' if vol_inc > 0 else 'unchanged'} by **{vol_inc:.2f}%** - Pump/dump {pump_msg}")
+    except Exception as e:
+        st.error(f"Error: {e}")
 
-        # Check if the trading volume has increased or not
-        if volume_increase > 0:
-            st.write(f"Trading volume of {coin_symbol} has increased by **{volume_increase:.2f}%** in the last 24 hours.\n{pump_likely}")
-        else:
-            st.write(f"Trading volume of {coin_symbol} has not increased in the last 24 hours.")
 
-    except requests.exceptions.RequestException as e:
-        return f"Error fetching data: {e}"
-
-def liquidity_to_supply_ratio(trading_volume_24h, circulating_supply):
-    ratio = trading_volume_24h / circulating_supply if circulating_supply else 0
+def liquidity_to_supply_ratio(vol_24h, circ_supply):
+    ratio = vol_24h / circ_supply if circ_supply else 0
     st.success("Liquidity to Supply Ratio")
-    st.metric(label="Liquidity to Supply Ratio", value=f"{ratio:.4f}", border=True)
-    if ratio > 1:
-        st.write(f"High liquidity with significant trading volume relative to circulating supply.")
-    else:
-        st.write(f"Low liquidity with less trading activity compared to the circulating supply.")
+    st.metric("Liquidity to Supply Ratio", f"{ratio:.4f}", border=True)
+    st.write("High liquidity" if ratio > 1 else "Low liquidity")
 
-# Function for Price vs ATH (All-Time High)
-def price_vs_ath(current_price, ath):
-    percent_difference = ((current_price - ath) / ath) * 100
 
+def price_vs_ath(price, ath):
+    pct = ((price - ath) / ath) * 100
     st.success("Price vs ATH (All-Time High)")
-    st.metric(label="Price vs ATH", value=f"{percent_difference:.2f}%", border=True)
+    st.metric("Price vs ATH", f"{pct:.2f}%", border=True)
 
-    if percent_difference > 0:
-        st.write(f"Price is {percent_difference:.2f}% higher than its all-time high.")
-        st.write(
-            "This could indicate strong bullish sentiment and market demand. However, it may also pose risks of overvaluation or increased volatility.")
+    if pct > 0:
+        st.write(f"**{pct:.2f}% above ATH** - Strong bullish sentiment, possible overvaluation risk")
     else:
-        st.write(f"Price is {abs(percent_difference):.2f}% lower than its all-time high.")
-        st.write(
-            "This suggests that the price is still below its historical peak, possibly indicating room for recovery or weaker market interest.")
+        st.write(f"**{abs(pct):.2f}% below ATH** - Room for recovery or weaker interest")
 
 
-# Function for Price vs ATH (All-Time High)
-def price_vs_ath(current_price, ath):
-    percent_difference = ((current_price - ath) / ath) * 100
-
-    st.success("Price vs ATH (All-Time High)")
-    st.metric(label="Price vs ATH", value=f"{percent_difference:.2f}%", border=True)
-
-    if percent_difference > 0:
-        st.write(f"Price is {percent_difference:.2f}% higher than its all-time high.")
-        st.write(
-            "This could indicate strong bullish sentiment and market demand. However, it may also pose risks of overvaluation or increased volatility.")
-    else:
-        st.write(f"Price is {abs(percent_difference):.2f}% lower than its all-time high.")
-        st.write(
-            "This suggests that the price is still below its historical peak, possibly indicating room for recovery or weaker market interest.")
-
-
-# Function for Price vs ATL (All-Time Low)
-def price_vs_atl(current_price, atl):
-    percent_increase = ((current_price - atl) / atl) * 100
-
+def price_vs_atl(price, atl):
+    pct = ((price - atl) / atl) * 100
     st.success("Price vs ATL (All-Time Low)")
-    st.metric(label="Price vs ATL", value=f"{percent_increase:.2f}%", border=True)
+    st.metric("Price vs ATL", f"{pct:.2f}%", border=True)
 
-    if percent_increase > 0:
-        st.write(f"Price is up {percent_increase:.2f}% from its all-time low.")
-        st.write(
-            "This shows significant recovery or growth from its lowest point. It may indicate the cryptocurrency's potential for long-term growth.")
+    if pct > 0:
+        st.write(f"**{pct:.2f}% above ATL** - Significant recovery, long-term growth potential")
     else:
-        st.write(f"Price is {abs(percent_increase):.2f}% below its all-time low.")
-        st.write(
-            "This is rare but suggests extreme bearish conditions or market inefficiencies, and the asset may be undervalued but carry high risks.")
+        st.write(f"**{abs(pct):.2f}% below ATL** - Extreme bearish, high risk")
 
-def fdv_vs_market_cap(fully_diluted_valuation, market_cap):
-    ratio = fully_diluted_valuation / market_cap if market_cap else 0
+
+def fdv_vs_market_cap(fdv, mcap):
+    ratio = fdv / mcap if mcap else 0
     st.success("FDV to Market Cap Ratio")
-    st.metric(label="FDV to Market Cap Ratio", value=f"{ratio:.2f}", border=True)
+    st.metric("FDV to Market Cap Ratio", f"{ratio:.2f}", border=True)
 
     if ratio > 1:
-        st.markdown("""
-            - More than 1 (Not all tokens are in circulation yet)
-            - Future release of tokens (e.g., through mining or vesting schedules) could dilute the value of currently circulating tokens, potentially impacting price.
-            """)
+        st.markdown("- **>1**: Not all tokens circulating, future dilution risk")
     elif ratio == 1:
-        st.markdown("""
-            - Equals to 1 (All tokens are already in circulation)
-            - There is no risk of future dilution, and the current Market Cap fully reflects the total supply.
-            """)
+        st.markdown("- **=1**: All tokens circulating, no dilution risk")
     else:
-        st.markdown("""
-            - Less than 1 (Unusual and may occur if the circulating supply is miscalculated or the tokenomics are atypical.)
-            - Current Market Cap closely reflects the value of circulating tokens.
-            """)
+        st.markdown("- **<1**: Unusual, possible miscalculation")
 
-def circulating_supply_vs_total_supply(circulating_supply, total_supply):
-    ratio = circulating_supply / total_supply if total_supply else 0
+
+def circulating_supply_vs_total_supply(circ, total):
+    ratio = circ / total if total else 0
     st.success("Circulating Supply vs Total Supply")
-    st.metric(label="Circulating vs Total Supply Ratio", value=f"{ratio:.6f}", border=True)
+    st.metric("Circulating vs Total Supply Ratio", f"{ratio:.6f}", border=True)
 
-    if ratio < 1:
-        st.write("🔄 Less than 100% of the total supply is circulating.")
-        st.write(
-            "This suggests more coins may be released over time, which could impact the price depending on demand.")
-    elif ratio >= 0.999 and ratio < 1:
-        st.write("✅ The circulating supply is very close to the total supply.")
-        st.write("This indicates almost all tokens are in circulation, leaving little room for inflation.")
+    if ratio < 0.999:
+        st.write("🔄 More coins may be released, potential price impact")
     else:
-        st.write("✅ All or nearly all of the total supply is already in circulation.")
-        st.write("This makes the supply highly predictable and reduces the risk of dilution.")
+        st.write("✅ Almost all tokens circulating, low dilution risk")
+
 
 def get_tokenomist_stats(coin_id):
-    tokenomist_url = (
-        f"https://tokenomist.ai/{coin_id}"
-    )
-    st.markdown(f'[View Tokenomist for {coin_id}]({tokenomist_url})')
+    st.markdown(f'[View Tokenomist for {coin_id}](https://tokenomist.ai/{coin_id})')
 
-# Updated embed function
-# https://www.tradingview.com/widget-docs/widgets/charts/symbol-overview/
+
 def embedTradingViewChart(coin_symbol):
-    # Format the coin symbol properly for TradingView
-    html_code = f"""
-    <!-- TradingView Widget BEGIN -->
+    symbol = coin_symbol.split('|')[0]
+    return f"""
     <div class="tradingview-widget-container">
-
         <div class="tradingview-widget-copyright">
-            <a href="https://www.tradingview.com/chart/?symbol={coin_symbol.split('|')[0]}" target="_blank">
-                <span class="blue-text">Track {coin_symbol.split('|')[0]} on TradingView</span>
+            <a href="https://www.tradingview.com/chart/?symbol={symbol}" target="_blank">
+                <span class="blue-text">Track {symbol} on TradingView</span>
             </a>
         </div>
-
         <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
         {{
-            "symbols": [
-                [
-                    "{coin_symbol}"
-                ]
-            ],
+            "symbols": [["{coin_symbol}"]],
             "chartOnly": false,
             "width": "100%",
             "locale": "en",
@@ -319,18 +212,8 @@ def embedTradingViewChart(coin_symbol):
             "headerFontSize": "medium",
             "lineWidth": 25,
             "lineType": 0,
-            "dateRanges": [
-                "1w|1",
-                "1m|30",
-                "3m|60",
-                "12m|1D",
-                "60m|1W",
-                "all|1M"
-            ]
+            "dateRanges": ["1w|1", "1m|30", "3m|60", "12m|1D", "60m|1W", "all|1M"]
         }}
         </script>
     </div>
-    <!-- TradingView Widget END -->
     """
-    return html_code
-

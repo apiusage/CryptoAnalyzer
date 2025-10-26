@@ -6,446 +6,281 @@ from bs4 import BeautifulSoup
 import numpy as np
 import warnings
 
-def get_technicals_stats(coin_symbol):
-    technicals_url = (
-        f"https://www.tradingview.com/symbols/{coin_symbol}/technicals/"
-    )
-    st.markdown(f'[View Tradingview Technicals for {coin_symbol}]({technicals_url})')
 
-# https://cointelegraph.com/news/john-bollinger-says-to-pay-attention-soon-as-big-move-could-be-imminent
+def get_technicals_stats(coin_symbol):
+    url = f"https://www.tradingview.com/symbols/{coin_symbol}/technicals/"
+    st.markdown(f'[View Tradingview Technicals for {coin_symbol}]({url})')
+
+
 def btc_weekly_dashboard_complete():
-    # --- Fetch BTC weekly data ---
     df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
     if df.empty or 'Close' not in df.columns:
-        st.error("Error fetching BTC data or 'Close' column missing.")
+        st.error("Error fetching BTC data")
         return
 
-    # --- Ensure Close is 1D numeric ---
-    close_series = df['Close']
-    if isinstance(close_series, pd.DataFrame):
-        close_series = close_series.iloc[:, 0]
-    close_series = pd.to_numeric(close_series, errors='coerce')
-    price = close_series.iloc[-1].item()
+    close = df['Close'].squeeze() if isinstance(df['Close'], pd.DataFrame) else df['Close']
+    close = pd.to_numeric(close, errors='coerce')
+    price = close.iloc[-1].item()
 
-    # --- SMA Configuration ---
-    sma_periods = {"SMA9": 9, "SMA20": 20, "SMA50": 50, "SMA200": 200}
-    sma_values = {}
-    for name, weeks in sma_periods.items():
-        sma_series = close_series.rolling(weeks).mean().dropna()
-        if len(sma_series) < 2:
-            last_val = price
-        else:
-            last_val = sma_series.iloc[-1].item()
-        sma_values[name] = last_val
+    # SMAs
+    smas = {name: close.rolling(p).mean().iloc[-1].item()
+            for name, p in [("SMA9", 9), ("SMA20", 20), ("SMA50", 50), ("SMA200", 200)]}
 
-    # --- Death/Golden Cross Logic ---
-    sma50, sma200 = sma_values['SMA50'], sma_values['SMA200']
-    pct_diff = (sma50 - sma200) / sma200 * 100
-    threshold = 2
-    if sma50 < sma200 and abs(pct_diff) <= threshold:
-        trend_msg = "⚠️ Near Death Cross (Bearish)"
-    elif sma50 < sma200:
-        trend_msg = "💀 Death Cross (Bearish)"
-    elif abs(pct_diff) <= threshold:
-        trend_msg = "⚠️ Near Golden Cross (Bullish)"
+    # Death/Golden Cross
+    pct_diff = (smas['SMA50'] - smas['SMA200']) / smas['SMA200'] * 100
+    if smas['SMA50'] < smas['SMA200']:
+        trend = "⚠️ Near Death Cross" if abs(pct_diff) <= 2 else "💀 Death Cross"
     else:
-        trend_msg = "🌟 Golden Cross (Bullish)"
-    st.markdown(f"**📈 Trend:** {trend_msg}")
+        trend = "⚠️ Near Golden Cross" if abs(pct_diff) <= 2 else "🌟 Golden Cross"
+    st.markdown(f"**📈 Trend:** {trend}")
 
-    # --- Bollinger Bands ---
-    ma20 = close_series.rolling(20).mean().iloc[-1].item()
-    std20 = close_series.rolling(20).std().iloc[-1].item()
+    # Bollinger Bandwidth
+    ma20 = close.rolling(20).mean().iloc[-1].item()
+    std20 = close.rolling(20).std().iloc[-1].item()
     bandwidth = 4 * std20 / ma20 * 100
-    st.markdown("**⚡ Volatility:** " + ("Low — market quiet" if bandwidth < 10 else f"Normal ({bandwidth:.2f}%)"))
+    st.markdown(f"**⚡ Volatility:** {'Low — quiet' if bandwidth < 10 else f'Normal ({bandwidth:.1f}%)'}")
 
-    # --- ATR (14-week) ---
-    high, low, close = df['High'], df['Low'], df['Close']
-    tr = pd.concat([high - low, (high - close.shift(1)).abs(), (low - close.shift(1)).abs()], axis=1).max(axis=1)
+    # ATR
+    tr = pd.concat([df['High'] - df['Low'],
+                    (df['High'] - close.shift()).abs(),
+                    (df['Low'] - close.shift()).abs()], axis=1).max(axis=1)
     atr = tr.rolling(14).mean().iloc[-1].item()
-    st.markdown("**📏 ATR:** " + (
-        "High — very volatile" if atr > price*0.05 else
-        "Low — quiet market" if atr < price*0.02 else
-        "Moderate — normal weekly moves"
-    ))
+    atr_msg = ("High — volatile" if atr > price * 0.05 else
+               "Low — quiet" if atr < price * 0.02 else "Moderate")
+    st.markdown(f"**📏 ATR:** {atr_msg}")
 
-    # --- RSI (14-week) ---
+    # RSI
     delta = close.diff()
-    gain = delta.clip(lower=0)
-    loss = -delta.clip(upper=0)
-    avg_gain = gain.rolling(14).mean().iloc[-1].item()
-    avg_loss = loss.rolling(14).mean().iloc[-1].item()
-    rs = avg_gain / avg_loss if avg_loss != 0 else float('inf')
-    rsi_val = 100 - (100 / (1 + rs))
-    st.markdown("**📊 RSI:** " + (
-        "Overbought — possible pullback" if rsi_val > 70 else
-        "Oversold — possible rebound" if rsi_val < 30 else
-        "Normal"
-    ))
+    gain = delta.clip(lower=0).rolling(14).mean().iloc[-1].item()
+    loss = -delta.clip(upper=0).rolling(14).mean().iloc[-1].item()
+    rsi = 100 - 100 / (1 + gain / loss) if loss else 100
+    rsi_msg = ("Overbought" if rsi > 70 else "Oversold" if rsi < 30 else "Normal")
+    st.markdown(f"**📊 RSI:** {rsi_msg}")
 
-    # --- Weekly Volume ---
-    latest_vol = df['Volume'].iloc[-1].item()
-    avg_vol50 = df['Volume'].rolling(50).mean().iloc[-1].item()
-    st.markdown("**📈 Volume:** " + (
-        "High — strong market activity" if latest_vol > avg_vol50 * 1.5 else
-        "Low — weak activity" if latest_vol < avg_vol50 * 0.7 else
-        "Normal — market stable"
-    ))
+    # Volume
+    vol = df['Volume'].iloc[-1].item()
+    avg_vol = df['Volume'].rolling(50).mean().iloc[-1].item()
+    vol_msg = ("High — strong" if vol > avg_vol * 1.5 else
+               "Low — weak" if vol < avg_vol * 0.7 else "Normal")
+    st.markdown(f"**📈 Volume:** {vol_msg}")
 
-    # --- Big Movement Warning ---
-    big_move = bandwidth < 10 and atr > price*0.03 and latest_vol > avg_vol50 * 1.2
+    # MACD
+    macd = close.ewm(span=12).mean() - close.ewm(span=26).mean()
+    signal = macd.ewm(span=9).mean()
+    macd_val, sig_val = macd.iloc[-1].item(), signal.iloc[-1].item()
 
-    # --- MACD ---
-    macd_short = close.ewm(span=12).mean()
-    macd_long = close.ewm(span=26).mean()
-    macd = macd_short - macd_long
-    signal_line = macd.ewm(span=9).mean()
-    macd_val, signal_val = macd.iloc[-1].item(), signal_line.iloc[-1].item()
+    direction = ("bullish 📈" if macd_val > sig_val and price > smas['SMA50'] else
+                 "bearish 📉" if macd_val < sig_val and price < smas['SMA50'] else
+                 "uncertain ⚖️")
 
-    if macd_val > signal_val and price > sma50:
-        direction = "bullish 📈"
-    elif macd_val < signal_val and price < sma50:
-        direction = "bearish 📉"
-    else:
-        direction = "uncertain ⚖️"
+    # Big Move Warning
+    big_move = bandwidth < 10 and atr > price * 0.03 and vol > avg_vol * 1.2
+    st.markdown(f"**{'⚠️ Big Movement Likely' if big_move else 'ℹ️ No big movement'}:** "
+                f"{'Indicators suggest volatility, likely ' + direction if big_move else 'expected soon'}")
 
-    if big_move:
-        st.markdown(f"**⚠️ Big Movement Likely:** All indicators suggest upcoming volatility, likely {direction}!")
-    else:
-        st.markdown("**ℹ️ No big movement expected soon**")
+    # Enhanced Momentum (MFI)
+    tp = (df['High'] + df['Low'] + df['Close']) / 3
+    mf = tp * df['Volume']
+    pos = mf.where(tp > tp.shift(), 0).rolling(14).sum().iloc[-1].item()
+    neg = mf.where(tp < tp.shift(), 0).rolling(14).sum().iloc[-1].item()
+    mfi = 100 - 100 / (1 + pos / neg) if neg else 100
 
-    # --- Enhanced Momentum + Volume Detector ---
-    typical_price = (df['High'] + df['Low'] + df['Close']) / 3
-    money_flow = typical_price * df['Volume']
-    pos_flow = money_flow.where(typical_price > typical_price.shift(1), 0.0)
-    neg_flow = money_flow.where(typical_price < typical_price.shift(1), 0.0)
-    pos_sum = pos_flow.rolling(14).sum().iloc[-1].item()
-    neg_sum = neg_flow.rolling(14).sum().iloc[-1].item()
-    mfr = pos_sum / neg_sum if neg_sum != 0 else 0
-    mfi_val = 100 - (100 / (1 + mfr))
+    # Momentum Score
+    rsi_s = rsi / 100
+    macd_s = 1 / (1 + np.exp(-np.clip(macd_val - sig_val, -50, 50)))
+    mfi_s = mfi / 100
+    score = 0.4 * rsi_s + 0.4 * macd_s + 0.2 * mfi_s
 
-    # --- Weighted Momentum Score (safe exp) ---
-    rsi_score = rsi_val / 100
-    diff = macd_val - signal_val
-    if abs(diff) > 700:  # prevent overflow
-        macd_score = 1.0 if diff > 0 else 0.0
-    else:
-        macd_score = 1 / (1 + np.exp(-diff))
-    mfi_score = mfi_val / 100
-    momentum_score = rsi_score*0.4 + macd_score*0.4 + mfi_score*0.2
+    st.markdown(f"**{'🚀' if score >= 0.6 else '⚰️' if score <= 0.4 else '⚖️'} Enhanced Detector:** "
+                f"{'Bullish — strong upside' if score >= 0.6 else 'Bearish — downside pressure' if score <= 0.4 else 'Neutral — mixed signals'}")
 
-    if momentum_score >= 0.6:
-        st.markdown("**🚀 Enhanced Detector:** Bullish — momentum and volume strongly confirm upside.")
-    elif momentum_score <= 0.4:
-        st.markdown("**⚰️ Enhanced Detector:** Bearish — downside pressure is significant.")
-    else:
-        st.markdown("**⚖️ Enhanced Detector:** Neutral — mixed momentum, unclear volume trends.")
 
 def sma_signal_table():
-    # --- Fetch BTC weekly data ---
     df = yf.download("BTC-USD", period="5y", interval="1wk", auto_adjust=True)
-    if df.empty or 'Close' not in df.columns:
-        st.error("Error fetching BTC data.")
+    if df.empty:
+        st.error("Error fetching BTC data")
         return
 
-    close_series = df['Close']
-    price = close_series.iloc[-1].item()
-    st.markdown(f"**💰 Current Price:** {price:.2f} ")
-    st.markdown("Current Price below SMA → SELL (bearish trend)")
-    st.markdown("Current Price above SMA → BUY (bullish trend)")
+    close = df['Close'].squeeze() if isinstance(df['Close'], pd.DataFrame) else df['Close']
+    price = close.iloc[-1].item()
 
-    # SMA periods: (Term, weeks)
-    sma_periods = {
-        "SMA9": ("Short-term", 9),
-        "SMA20": ("Short-term", 20),
-        "SMA50": ("Medium-term", 50),
-        "SMA200": ("Long-term", 200)
-    }
+    st.markdown(f"**💰 Current Price:** ${price:,.2f}")
+    st.markdown("Price > SMA → BUY (bullish) | Price < SMA → SELL (bearish)")
 
-    # Convert weeks to readable timeframe
-    def get_timeframe_range(weeks):
+    def timeframe(weeks):
         if weeks < 4:
             return f"~{weeks * 7} days"
         elif weeks < 52:
-            min_months = round(weeks / 4.5)
-            max_months = round(weeks / 4)
-            return f"{min_months}-{max_months} months"
+            return f"{round(weeks / 4.5)}-{round(weeks / 4)} months"
         else:
-            years = weeks / 52
-            return f"~{round(years, 1)} years"
+            return f"~{round(weeks / 52, 1)} years"
 
-    sma_values = {}
-    for name, (term, weeks) in sma_periods.items():
-        sma_series = close_series.rolling(weeks).mean().dropna()
-        last_val = sma_series.iloc[-1].item() if len(sma_series) else price
-        sma_values[name] = last_val
+    sma_data = [
+        ("SMA9", "🔹", 9),
+        ("SMA20", "🔸", 20),
+        ("SMA50", "🟡", 50),
+        ("SMA200", "🟠", 200)
+    ]
 
-    sma_emojis = {"SMA9": "🔹", "SMA20": "🔸", "SMA50": "🟡", "SMA200": "🟠"}
-
-    # Build table data with correct SMA logic
-    table_data = []
-    for name, (term, weeks) in sma_periods.items():
-        sma = sma_values[name]
-        timeframe = get_timeframe_range(weeks)
-        # ✅ Standard SMA logic: BUY if price above SMA
+    table = []
+    for name, emoji, weeks in sma_data:
+        sma = close.rolling(weeks).mean().iloc[-1].item()
         signal = "BUY" if price > sma else "SELL"
-        table_data.append({
+        table.append({
             "Signal": signal,
-            "SMA": f"{sma_emojis[name]} {name}",
+            "SMA": f"{emoji} {name}",
             "SMA Value": round(sma, 2),
-            "Timeframe": timeframe
+            "Timeframe": timeframe(weeks)
         })
 
-    df_table = pd.DataFrame(table_data)
-
-    # Style BUY/SELL
-    def color_signal(val):
-        if val == "BUY":
-            return "color: green; font-weight: bold"
-        elif val == "SELL":
-            return "color: red; font-weight: bold"
-        return ""
-
-    st.dataframe(df_table.style.map(color_signal, subset=["Signal"]))
+    df_table = pd.DataFrame(table)
+    st.dataframe(df_table.style.map(
+        lambda
+            v: "color: green; font-weight: bold" if v == "BUY" else "color: red; font-weight: bold" if v == "SELL" else "",
+        subset=["Signal"]
+    ))
 
 
 def display_unified_confidence_score(df, price=None):
-    """
-    Calculate and display a unified BTC confidence score (0-100%) in Streamlit.
-
-    Parameters:
-    - df: pandas DataFrame containing 'Close', 'High', 'Low', 'Volume'
-    - price: optional, latest BTC price (will take last Close if None)
-    """
     if price is None:
-        price = float(df['Close'].iloc[-1].item())
+        price = df['Close'].iloc[-1].item()
 
-    # --- Trend score
-    sma50 = df['Close'].rolling(50).mean().iloc[-1].item()
-    sma200 = df['Close'].rolling(200).mean().iloc[-1].item()
-    trend_score = np.clip((sma50 - sma200)/sma200 + 0.5, 0, 1)
+    close = df['Close'].squeeze() if isinstance(df['Close'], pd.DataFrame) else df['Close']
+    close = pd.to_numeric(close, errors='coerce')
 
-    # --- Momentum score (RSI + MACD)
-    close = df['Close']
+    # Trend
+    sma50 = close.rolling(50).mean().iloc[-1].item()
+    sma200 = close.rolling(200).mean().iloc[-1].item()
+    trend_s = np.clip((sma50 - sma200) / sma200 + 0.5, 0, 1)
+
+    # Momentum (RSI + MACD)
     delta = close.diff()
-    gain = delta.clip(lower=0)
-    loss = -delta.clip(upper=0)
-    avg_gain = gain.rolling(14).mean().iloc[-1].item()
-    avg_loss = loss.rolling(14).mean().iloc[-1].item()
-    rs = avg_gain / avg_loss if avg_loss !=0 else 100
-    rsi_val = 100 - (100 / (1 + rs))
-    rsi_score = rsi_val / 100
+    gain = delta.clip(lower=0).rolling(14).mean().iloc[-1].item()
+    loss = -delta.clip(upper=0).rolling(14).mean().iloc[-1].item()
+    rsi = 100 - 100 / (1 + gain / loss) if loss else 100
 
-    macd_short = df['Close'].ewm(span=12).mean()
-    macd_long = df['Close'].ewm(span=26).mean()
-    macd = macd_short - macd_long
+    macd = close.ewm(span=12).mean() - close.ewm(span=26).mean()
     signal = macd.ewm(span=9).mean()
-    macd_val = macd.iloc[-1].item()
-    signal_val = signal.iloc[-1].item()
+    macd_s = 1 / (1 + np.exp(-np.clip((macd.iloc[-1] - signal.iloc[-1]).item(), -50, 50)))
+    momentum_s = 0.5 * rsi / 100 + 0.5 * macd_s
 
-    # --- Stable sigmoid for MACD
-    def stable_sigmoid(x):
-        x = np.clip(x, -50, 50)  # prevent overflow
-        return 1 / (1 + np.exp(-x))
+    # Volume (MFI)
+    tp = (df['High'] + df['Low'] + df['Close']) / 3
+    mf = tp * df['Volume']
+    pos = mf.where(tp > tp.shift(), 0).rolling(14).sum().iloc[-1].item()
+    neg = mf.where(tp < tp.shift(), 0).rolling(14).sum().iloc[-1].item()
+    mfi = 100 - 100 / (1 + pos / neg) if neg else 100
+    volume_s = mfi / 100
 
-    macd_score = stable_sigmoid(macd_val - signal_val)
-    momentum_score = 0.5 * rsi_score + 0.5 * macd_score
-
-    # --- Volume score (MFI)
-    typical_price = (df['High'] + df['Low'] + df['Close']) / 3
-    money_flow = typical_price * df['Volume']
-    pos_flow = money_flow.where(typical_price > typical_price.shift(1), 0.0)
-    neg_flow = money_flow.where(typical_price < typical_price.shift(1), 0.0)
-    pos_sum = pos_flow.rolling(14).sum().iloc[-1].item()
-    neg_sum = neg_flow.rolling(14).sum().iloc[-1].item()
-    mfi_val = 100 - (100 / (1 + (pos_sum / neg_sum if neg_sum != 0 else 0)))
-    volume_score = mfi_val / 100
-
-    # --- Volatility score (ATR normalized)
-    high, low = df['High'], df['Low']
-    tr = pd.concat([
-        high - low,
-        (high - close.shift(1)).abs(),
-        (low - close.shift(1)).abs()
-    ], axis=1).max(axis=1)
+    # Volatility (ATR)
+    tr = pd.concat([df['High'] - df['Low'],
+                    (df['High'] - close.shift()).abs(),
+                    (df['Low'] - close.shift()).abs()], axis=1).max(axis=1)
     atr = tr.rolling(14).mean().iloc[-1].item()
-    volatility_score = np.clip(atr / price * 20, 0, 1)
+    volatility_s = np.clip(atr / price * 20, 0, 1)
 
-    # --- Weighted final score
-    final_score = 0.2*trend_score + 0.4*momentum_score + 0.2*volume_score + 0.2*volatility_score
-    final_score_pct = final_score * 100
+    # Final Score
+    score = 0.2 * trend_s + 0.4 * momentum_s + 0.2 * volume_s + 0.2 * volatility_s
+    pct = score * 100
 
-    # --- Display nicely in Streamlit
     st.markdown("### 📌 Unified Market Confidence Score")
-    st.progress(final_score)
-    if final_score >= 0.7:
-        st.success(f"Strongly Bullish — Confidence: {final_score_pct:.1f}%")
-    elif final_score >= 0.55:
-        st.info(f"Bullish — Confidence: {final_score_pct:.1f}%")
-    elif final_score >= 0.45:
-        st.warning(f"Neutral / Sideways — Confidence: {final_score_pct:.1f}%")
-    elif final_score >= 0.3:
-        st.info(f"Bearish — Confidence: {final_score_pct:.1f}%")
-    else:
-        st.error(f"Strongly Bearish — Confidence: {final_score_pct:.1f}%")
+    st.progress(score)
 
-    # Return values for further use if needed
-    return {
-        "final_score": final_score,
-        "trend_score": trend_score,
-        "momentum_score": momentum_score,
-        "volume_score": volume_score,
-        "volatility_score": volatility_score,
-        "rsi_val": rsi_val,
-        "macd_val": macd_val,
-        "mfi_val": mfi_val,
-        "atr": atr
-    }
+    if score >= 0.7:
+        st.success(f"Strongly Bullish — {pct:.1f}%")
+    elif score >= 0.55:
+        st.info(f"Bullish — {pct:.1f}%")
+    elif score >= 0.45:
+        st.warning(f"Neutral — {pct:.1f}%")
+    elif score >= 0.3:
+        st.info(f"Bearish — {pct:.1f}%")
+    else:
+        st.error(f"Strongly Bearish — {pct:.1f}%")
+
+    return {"score": score, "trend": trend_s, "momentum": momentum_s,
+            "volume": volume_s, "volatility": volatility_s, "rsi": rsi,
+            "macd": macd.iloc[-1].item(), "mfi": mfi, "atr": atr}
+
 
 def get_coinbase_app_rank():
-    """Fetch Coinbase App Store rank and display in Streamlit."""
-    url = "https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    rank_tag = soup.find("a", {"class": "inline-list__item"})
-    if rank_tag:
-        rank = rank_tag.get_text(strip=True)
-        st.write(f"**📱 Coinbase App Store Rank:** {rank}")
-    else:
-        st.write("**📱 Coinbase App Store Rank:** Not found")
+    try:
+        r = requests.get("https://apps.apple.com/us/app/coinbase-buy-bitcoin-ether/id886427730",
+                         headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
+        soup = BeautifulSoup(r.text, "html.parser")
+        rank = soup.find("a", {"class": "inline-list__item"})
+        st.write(f"**📱 Coinbase Rank:** {rank.get_text(strip=True) if rank else 'Not found'}")
+    except:
+        st.write("**📱 Coinbase Rank:** Error fetching")
 
 def live_market_ticker():
-    """Ultra-condensed, actionable market ticker for pro traders (stocks, FX, yields, commodities, yields)."""
-    import warnings
-    import yfinance as yf
-    import pandas as pd
-    import streamlit as st
-
-    # --- Helpers ---
-    def get_yahoo_change_safe(symbol):
+    def get_chg(sym):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                df = yf.download(symbol, period="2d", interval="1d", progress=False, auto_adjust=True)
-            if df.empty or len(df) < 2:
+                df = yf.download(sym, period="2d", interval="1d", progress=False, auto_adjust=True)
+            if len(df) < 2:
                 return 0.0
-            last = float(df["Close"].iat[-1])
-            prev = float(df["Close"].iat[-2])
-            return (last - prev) / prev * 100
+            return (df["Close"].iat[-1] - df["Close"].iat[-2]) / df["Close"].iat[-2] * 100
         except:
             return 0.0
 
-    # --- Fetch data ---
-    dxy = get_yahoo_change_safe("DX-Y.NYB")
-    vix = get_yahoo_change_safe("^VIX")
-    spx = get_yahoo_change_safe("^GSPC")
-    qqq = get_yahoo_change_safe("QQQ")
-    dow = get_yahoo_change_safe("^DJI")
-    gold = get_yahoo_change_safe("GC=F")
-    silver = get_yahoo_change_safe("SI=F")
-    oil = get_yahoo_change_safe("CL=F")
-    tnx = get_yahoo_change_safe("^TNX")
-    t2y = get_yahoo_change_safe("^IRX")
-    eurusd = get_yahoo_change_safe("EURUSD=X")
-    jpyusd = get_yahoo_change_safe("JPY=X")
+    # Fetch all at once
+    syms = ["^GSPC", "QQQ", "^DJI", "DX-Y.NYB", "^VIX", "GC=F", "SI=F",
+            "CL=F", "^TNX", "^IRX", "EURUSD=X", "JPY=X"]
+    spx, qqq, dow, dxy, vix, gold, silver, oil, tnx, t2y, eur, jpy = [get_chg(s) for s in syms]
 
-    # --- Build actionable insights ---
     actions = []
 
     # Equities
     if spx < -0.3 or qqq < -0.3:
-        actions.append("📉 Stocks down → cautious")
+        actions.append("📉 Stocks down")
     elif spx > 0.3 or qqq > 0.3:
-        actions.append("📈 Stocks up → consider buying")
+        actions.append("📈 Stocks up")
     else:
-        actions.append("🟡 Stocks stable → holding pattern")
+        actions.append("🟡 Stocks flat")
 
-    if dow < -0.3:
-        actions.append("📉 Dow down → risk-off")
-    elif dow > 0.3:
-        actions.append("📈 Dow up → industrials strong")
-
-    # USD / FX
+    # USD
     if dxy > 0.2:
-        actions.append("💵 USD strong → exporters pressured")
+        actions.append("💵 USD strong")
     elif dxy < -0.2:
-        actions.append("💵 USD weak → exporters benefit")
+        actions.append("💵 USD weak")
     else:
-        actions.append("🟢 USD steady → balanced FX")
-
-    if eurusd < -0.2:
-        actions.append("🇪🇺 EUR down → USD strength")
-    elif eurusd > 0.2:
-        actions.append("🇪🇺 EUR up → USD weakness")
-
-    if jpyusd < -0.2:
-        actions.append("🇯🇵 JPY down → USD strength")
-    elif jpyusd > 0.2:
-        actions.append("🇯🇵 JPY up → yen strengthening")
+        actions.append("💵 USD neutral")
 
     # Volatility
     if vix > 2:
-        actions.append("⚠️ VIX high → cautious")
+        actions.append("⚠️ VIX high")
     elif vix < -2:
-        actions.append("✅ VIX low → market calm")
+        actions.append("✅ VIX low")
     else:
-        actions.append("ℹ️ VIX neutral → normal volatility")
+        actions.append("⚪ VIX stable")
 
     # Commodities
     if gold > 0.3:
-        actions.append("🥇 Gold up → safe-haven strong")
+        actions.append("🥇 Gold up")
     elif gold < -0.3:
-        actions.append("🥇 Gold down → consider selling")
-    else:
-        actions.append("🟡 Gold stable → holding value")
-
-    if silver > 0.3:
-        actions.append("🥈 Silver up → industrial/hedge strong")
-    elif silver < -0.3:
-        actions.append("🥈 Silver down → weak")
+        actions.append("🥇 Gold down")
 
     if oil > 0.3:
-        actions.append("🛢 Oil up → energy strong")
+        actions.append("🛢 Oil up")
     elif oil < -0.3:
-        actions.append("🛢 Oil down → energy weak")
-    else:
-        actions.append("🟢 Oil stable → energy balanced")
+        actions.append("🛢 Oil down")
 
     # Yields
     if tnx > 0.2:
-        actions.append("📊 10Y yields rising → bonds less attractive")
+        actions.append("📊 10Y rising")
     elif tnx < -0.2:
-        actions.append("📊 10Y yields down → bonds attractive")
-    else:
-        actions.append("ℹ️ 10Y yields flat → rates steady")
+        actions.append("📊 10Y falling")
 
-    if t2y > 0.2:
-        actions.append("📈 2Y rising → short-term rates higher")
-    elif t2y < -0.2:
-        actions.append("📉 2Y down → short-term rates lower")
-    else:
-        actions.append("ℹ️ 2Y flat → short rates stable")
+    brief = " | ".join(actions) if actions else "Market stable"
 
-    # ------------------ Combine text ------------------
-    brief_text = " | ".join(actions) if actions else "Market steady, no major moves."
-
-    # ------------------ Horizontal scrolling ticker ------------------
     ticker_html = f"""
-    <div style='overflow:hidden; white-space:nowrap; background-color:#000; padding:10px 0; border-radius:10px;'>
-        <div style='display:inline-block; padding-left:100%;
-                    animation: ticker 60s linear infinite;
-                    font-size:20px; font-weight:600; color:#00ffcc;
-                    font-family:"Segoe UI", Arial, sans-serif;'>
-            💡 {brief_text} &nbsp;&nbsp;&nbsp; 💡 {brief_text}
+    <div style='overflow:hidden; white-space:nowrap; background:#000; padding:10px 0; border-radius:10px;'>
+        <div style='display:inline-block; padding-left:100%; animation: ticker 60s linear infinite;
+                    font-size:20px; font-weight:600; color:#00ffcc; font-family:Arial,sans-serif;'>
+            💡 {brief} &nbsp;&nbsp;&nbsp; 💡 {brief}
         </div>
     </div>
-    <style>
-    @keyframes ticker {{
-        0% {{ transform: translateX(0%); }}
-        100% {{ transform: translateX(-100%); }}
-    }}
-    </style>
+    <style>@keyframes ticker {{0%{{transform:translateX(0)}}100%{{transform:translateX(-100%)}}}}</style>
     """
     st.markdown(ticker_html, unsafe_allow_html=True)
-

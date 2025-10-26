@@ -1,38 +1,39 @@
 from PIL import Image
-from content import *
-from streamlit_option_menu import option_menu
 from pathlib import Path
+import streamlit as st
+from streamlit_option_menu import option_menu
+from content import *
 from TA import *
 from unitTrust import *
 
-# Convert PNG to JPEG properly
-img = Image.open("images/bitcoin.png").convert("RGB")
-img.save("images/bitcoin.jpeg")
+# Move set_page_config OUTSIDE of any function and make it the FIRST Streamlit command
+img_path = Path("images/bitcoin.jpeg")
+if not img_path.exists():
+    Image.open("images/bitcoin.png").convert("RGB").save(img_path)
 
-PAGE_CONFIG = {
-    "page_title": "AIO Analyzer",
-    "page_icon": img,
-    "layout": "wide",
-    "initial_sidebar_state": "expanded",
-}
-st.set_page_config(**PAGE_CONFIG)
+st.set_page_config(
+    page_title="AIO Analyzer",
+    page_icon=Image.open(img_path),
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Inject CSS
-st.markdown(f"<style>{Path('style.css').read_text()}</style>", unsafe_allow_html=True)
+@st.cache_resource
+def setup():
+    # Only cache non-config setup tasks
+    st.markdown(f"<style>{Path('style.css').read_text()}</style>", unsafe_allow_html=True)
 
-# Inline Banner
-st.markdown("""
-<a href="/" target="_self" class="logo-banner">
-    <h1>
-        <span class="emoji">🚀</span> AIO Analyzer <span class="emoji">📊</span>
-    </h1>
-</a>
-""", unsafe_allow_html=True)
+if __name__ == "__main__":
+    setup()
 
-# Show real-time, actionable market summary
-live_market_ticker()
+    st.markdown("""
+    <a href="/" target="_self" class="logo-banner">
+        <h1><span class="emoji">🚀</span> AIO Analyzer <span class="emoji">📊</span></h1>
+    </a>
+    """, unsafe_allow_html=True)
 
-def main():
+    live_market_ticker()
+
     selected = option_menu(
         menu_title=None,
         options=["Investing", "Trading", "Coin Analyzer", "Unit Trust"],
@@ -50,15 +51,11 @@ def main():
     elif selected == "Trading":
         get_trading_data()
     elif selected == "Coin Analyzer":
-        selected_coins = get_coin_table()
-        getcontent(selected_coins)
+        getcontent(get_coin_table())
     elif selected == "Unit Trust":
-        funds_list = [
-            {"name": "Allianz Global Investors Fund - Allianz Income And Growth Am", "url": "https://www.investing.com/funds/allianz-income-growth-am-h2-technical"},
-            {"name": "Pimco Gis Income Fund Administrative Sgd (hedged) Income", "url": "https://www.investing.com/funds/ie00b91rq825-technical"}
-        ]
-
-        unitTrustList(funds_list)
-
-if __name__ == "__main__":
-    main()
+        unitTrustList([
+            {"name": "Allianz Global Investors Fund - Allianz Income And Growth Am",
+             "url": "https://www.investing.com/funds/allianz-income-growth-am-h2-technical"},
+            {"name": "Pimco Gis Income Fund Administrative Sgd (hedged) Income",
+             "url": "https://www.investing.com/funds/ie00b91rq825-technical"}
+        ])

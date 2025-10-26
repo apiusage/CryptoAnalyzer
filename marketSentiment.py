@@ -1,97 +1,42 @@
-import urllib
+import urllib.parse
 from datetime import datetime
 import streamlit as st
 import requests
 import pandas as pd
 
-def fetch_and_plot_fear_and_greed():
-    # Fetch data from the API
-    url = "https://api.alternative.me/fng/?limit=20"
-    response = requests.get(url)
-    data = response.json()['data']
+CMC_API_KEY = 'fcf7ee51-af70-4614-821a-f253d1f0d7da'
 
-    # Extract the relevant data from the response
-    timestamps = [int(entry['timestamp']) for entry in data]  # Ensure timestamp is an integer
-    values = [entry['value'] for entry in data]
-
-    # Convert timestamps to readable datetime format
+def process_fng_data(data):
+    """Common processing for FNG data"""
+    timestamps = [int(e['timestamp']) for e in data]
+    values = [e['value'] for e in data]
     dates = [datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S') for ts in timestamps]
+    return pd.DataFrame({'Date': pd.to_datetime(dates), 'Fear and Greed Index': pd.to_numeric(values)})
 
-    # Create a DataFrame for easy plotting
-    df = pd.DataFrame({
-        'Date': pd.to_datetime(dates),
-        'Fear and Greed Index': pd.to_numeric(values)
-    })
+def fetch_and_plot_fear_and_greed():
+    data = requests.get("https://api.alternative.me/fng/?limit=20").json()['data']
+    df = process_fng_data(data)
 
     col1, col2 = st.columns(2)
-
     with col1:
-        # Embed the image
-        st.image("https://alternative.me/crypto/fear-and-greed-index.png", caption="Latest Crypto Fear & Greed Index")
+        st.image("https://alternative.me/crypto/fear-and-greed-index.png",
+                 caption="Latest Crypto Fear & Greed Index")
     with col2:
-        # Plotting the data as a line chart in Streamlit
         st.line_chart(df.set_index('Date'))
-
 
 def fetch_and_plot_fear_and_greed_CMC():
-    # Your CoinMarketCap API key
-    api_key = 'fcf7ee51-af70-4614-821a-f253d1f0d7da'  # Replace with your actual API key
-    url = "https://pro-api.coinmarketcap.com/v3/fear-and-greed/historical"
+    r = requests.get("https://pro-api.coinmarketcap.com/v3/fear-and-greed/historical",
+                     headers={'X-CMC_PRO_API_KEY': CMC_API_KEY, 'Accept': 'application/json'},
+                     params={'limit': 30, 'convert': 'USD'})
 
-    # Define the headers for the API request
-    headers = {
-        'X-CMC_PRO_API_KEY': api_key,
-        'Accept': 'application/json',
-    }
-
-    # Parameters for the historical data request (for the last 30 days, for example)
-    params = {
-        'limit': 30,  # Number of data points
-        'convert': 'USD',  # Conversion to USD
-    }
-
-    # Fetch data from the CoinMarketCap API
-    response = requests.get(url, headers=headers, params=params)
-
-    if response.status_code == 200:
-        data = response.json()['data']
-
-        # Process the data into a DataFrame
-        timestamps = [entry['timestamp'] for entry in data]
-        values = [entry['value'] for entry in data]
-
-        st.write(f"Value: {values[0]}")
-
-        # Convert timestamps to readable datetime format
-        dates = [datetime.utcfromtimestamp(int(ts)).strftime('%Y-%m-%d %H:%M:%S') for ts in timestamps]
-
-        # Create a DataFrame for easy plotting
-        df = pd.DataFrame({
-            'Date': pd.to_datetime(dates),
-            'Fear and Greed Index': pd.to_numeric(values)
-        })
-
+    if r.status_code == 200:
+        data = r.json()['data']
+        df = process_fng_data(data)
+        st.write(f"Value: {data[0]['value']}")
         st.line_chart(df.set_index('Date'))
     else:
-        st.error(f"Error: {response.status_code}. Could not fetch data.")
+        st.error(f"Error: {r.status_code}")
 
-
-# https://pypi.org/project/pytrends/
-def get_google_trends(coin_name, timeframe="today 12-m", geo="Worldwide", language="en"):
-    # Encode coin_name and timeframe to handle spaces and special characters add %20
-    encoded_coinName = urllib.parse.quote(coin_name)
-    # encoded_timeframe = urllib.parse.quote(timeframe)
-
-    # Construct the URL for embedding
-    trends_url = (
-        f"https://trends.google.com/trends/explore?&q={encoded_coinName}&hl={language}"
-    )
-
-    # Create a clickable hyperlink in Streamlit
-    st.markdown(f'[View Google Trends for {coin_name}]({trends_url})')
-
-
-
-
-
-
+def get_google_trends(coin_name, language="en"):
+    url = f"https://trends.google.com/trends/explore?&q={urllib.parse.quote(coin_name)}&hl={language}"
+    st.markdown(f'[View Google Trends for {coin_name}]({url})')
