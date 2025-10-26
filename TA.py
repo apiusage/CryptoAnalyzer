@@ -101,7 +101,7 @@ def sma_signal_table():
     close = df['Close'].squeeze() if isinstance(df['Close'], pd.DataFrame) else df['Close']
     price = close.iloc[-1].item()
 
-    st.markdown(f"**💰 Current Price:** ${price:,.2f}")
+    st.markdown(f"**💰 Current Price:** ${price:,.0f}")  # <- whole number price
     st.markdown("Price > SMA → BUY (bullish) | Price < SMA → SELL (bearish)")
 
     def timeframe(weeks):
@@ -126,14 +126,17 @@ def sma_signal_table():
         table.append({
             "Signal": signal,
             "SMA": f"{emoji} {name}",
-            "SMA Value": round(sma, 2),
+            "SMA Value": round(sma),  # <- round to nearest whole number
             "Timeframe": timeframe(weeks)
         })
 
     df_table = pd.DataFrame(table)
     st.dataframe(df_table.style.map(
-        lambda
-            v: "color: green; font-weight: bold" if v == "BUY" else "color: red; font-weight: bold" if v == "SELL" else "",
+        lambda v: (
+            "color: green; font-weight: bold" if v == "BUY"
+            else "color: red; font-weight: bold" if v == "SELL"
+            else ""
+        ),
         subset=["Signal"]
     ))
 
