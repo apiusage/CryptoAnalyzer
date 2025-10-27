@@ -1,0 +1,39 @@
+Generate a detailed historical table of Bitcoin’s major bull market peaks using on-chain and technical valuation indicators.
+
+The model should automatically detect each major historical market peak (from Bitcoin’s full trading history to present), based on large price reversals (≥ 70% drawdown after top) or known cycle highs.
+
+For each detected cycle peak, include columns:
+
+Cycle (auto-label by year, e.g. “2011”, “2013 (Apr)”, “2013 (Dec)”, “2017”, “2021 (Apr)”, “2021 (Nov)” etc.)
+Peak Date (actual top date)
+BTC Price (USD)
+Pi Cycle Top Value (price when signal triggered)
+Puell Multiple
+Mayer Multiple
+4-Year MA Multiplier
+NUPL
+MVRV
+Days Before/After Actual Peak (difference between Pi-Cycle signal and actual top)
+Price Decline After Peak (%)
+Notes (short context)
+
+Indicator definitions and thresholds:
+Pi Cycle = Short MA × 2 crosses Long MA → historical top signal
+Puell > 2 → miner revenue extreme
+Mayer > 2 × 200-day MA → overheated
+4-Year MA > 3.5 → long-term overbought
+NUPL ≥ 0.7 → most holders in profit
+MVRV ≥ 3 → high unrealized gains
+
+Use actual or best-estimate values for each metric, referencing public data (Glassnode, LookIntoBitcoin, Bitbo).
+
+Output format:
+| Cycle | Peak Date | BTC Price (USD) | Pi Cycle | Puell | Mayer | 4-Yr MA | NUPL | MVRV | Days to Peak | Decline % | Notes |
+|:------|:-----------|----------------:|---------:|------:|------:|--------:|------:|------:|--------------:|-----------:|:------|
+
+Then include a Summary Section explaining:
+Which indicator predicted peaks most accurately (smallest lead/lag)
+Average days between signal and top
+Which indicators typically confirm peaks simultaneously
+
+Make sure the model detects all major tops automatically, without being told which years to include, and uses concise, readable numeric results.

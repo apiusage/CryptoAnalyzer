@@ -1,0 +1,37 @@
+Generate a detailed historical table of Bitcoin’s major bull market peaks using on-chain and technical valuation indicators, based on Bitcoin’s full trading history up to October 27, 2025. Automatically detect major market peaks based on large price reversals (≥70% drawdown after top) or known cycle highs (e.g., 2011, 2013 Apr, 2013 Dec, 2017, 2021 Apr, 2021 Nov). Use data from CoinGlass (for NUPL) and cross-reference with Glassnode, LookIntoBitcoin, and Bitbo for other indicators. **Validate prices against multiple exchanges (e.g., Bitstamp, Coinbase) and use the daily closing high.** Include an average row for numeric columns.
+
+**Table Columns**:
+- Cycle: Label by year or specify month for multiple peaks (e.g., “2013 (Apr)”, “2013 (Dec)”).
+- Peak Date: Exact date of the price peak (MM/DD/YYYY).
+- BTC Price (USD): Peak price, rounded to two decimals for pre-2017, whole numbers for later.
+- Pi Cycle (Signal Date & Price): Date and price when the 111-day MA × 2 crosses the 350-day MA; use “N/A” if no signal **and note alternative indicators (e.g., MVRV, NUPL) for confirmation**.
+- Puell (≈): Puell Multiple (miner revenue / 365-day average); approximate to one decimal.
+- Mayer (≈): Mayer Multiple (price / 200-day MA); approximate to one decimal.
+- 4-Yr MA (≈): 4-Year MA Multiplier (price / 4-year MA); approximate to one decimal.
+- NUPL (≈): Net Unrealized Profit/Loss from CoinGlass; approximate to two decimals.
+- MVRV (≈): Market Value / Realized Value; approximate to one decimal.
+- Days (Pi → Peak): Days between Pi Cycle signal and peak (positive = signal before, negative = after, N/A if no signal).
+- Decline (%): Maximum drawdown post-peak, rounded to whole numbers.
+- Notes: Brief context for the cycle (e.g., market drivers, events).
+
+**Indicator Thresholds**:
+- Pi Cycle: Signal when short MA (111-day × 2) crosses long MA (350-day).
+- Puell: >2 indicates miner revenue extreme.
+- Mayer: >2 suggests overheated market.
+- 4-Yr MA: >3.5 indicates long-term overbought.
+- NUPL: ≥0.7 signals euphoria.
+- MVRV: ≥3 indicates high unrealized gains.
+
+**Instructions**:
+1. Use historical data from CoinGlass (NUPL), Glassnode, LookIntoBitcoin, and Bitbo. **Cross-check indicator values across at least two sources for consistency.** Estimate values for early cycles (e.g., 2011) if data is sparse, **using market cap proxies or extrapolation from later cycles**, and note limitations in Notes.
+2. Ensure peak dates and prices align with consensus (e.g., Jun 8, 2011 for $31.91, Dec 4, 2013 for $1,163). **Use daily closing highs from major exchanges.**
+3. Calculate averages for numeric columns (Puell, Mayer, 4-Yr MA, NUPL, MVRV, Days to Peak, Decline %) across all cycles, excluding N/A values for Days to Peak.
+4. **Check for new peaks post-2021 Nov using real-time data (e.g., CoinGlass, X posts) and include if drawdown ≥70%.**
+5. Output the table in CSV format, suitable for Excel import, with commas as delimiters and no extra spaces.
+6. Include a brief explanation of data sources, assumptions, and validation methods.
+
+**Output Format**:
+```csv
+Cycle,Peak Date,BTC Price (USD),Pi Cycle (Signal Date & Price),Puell (≈),Mayer (≈),4-Yr MA (≈),NUPL (≈),MVRV (≈),Days (Pi → Peak),Decline (%),Notes
+...
+Average,,,N/A,<Puell>,<Mayer>,<4-Yr MA>,<NUPL>,<MVRV>,<Days>,<Decline>,
