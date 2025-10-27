@@ -279,7 +279,7 @@ def get_investing_data():
         df = pd.read_excel(file_path)
         # Convert all numeric columns to strings with 1 decimal place
         df = df.apply(lambda x: x.map("{:.2f}".format) if pd.api.types.is_numeric_dtype(x) else x)
-        st.table(df)
+        st.dataframe(df)
     except FileNotFoundError:
         st.error(f"File not found: {file_path}")
     except Exception as e:
@@ -510,4 +510,5 @@ def get_footer_data():
         st.markdown("[Frasers Centrepoint](https://www.tradingview.com/chart/?symbol=SGX%3AJ69U)")
         st.markdown("[CapitaLand ICT](https://www.tradingview.com/chart/?symbol=SGX%3AC38U)")
         st.markdown("[SPDR Homebuilders](https://www.tradingview.com/chart/?symbol=AMEX%3AXHB)")
+
         st.markdown("[Lowe's](https://www.tradingview.com/chart/?symbol=NYSE%3ALOW)")
