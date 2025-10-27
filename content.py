@@ -2,6 +2,7 @@ import streamlit.components.v1 as components
 import re
 from TA import *
 from FA import *
+import openpyxl
 
 PROMPT_DIR = "prompts/"
 
@@ -269,6 +270,36 @@ def topIndicatorInfo():
         - **Company BTC cost** – company BTC holdings
         """)
 
+def show_df_with_avg(df, deline_col='deline', decline_col='Decline (%)'):
+    df_display = df.copy()
+    numeric_cols = df_display.select_dtypes('number').columns
+
+    # Add average row at top
+    avg_data = {col: df_display[col].mean() if col in numeric_cols else 'Average' if i == 0 else ''
+                for i, col in enumerate(df_display.columns)}
+    avg_row = pd.DataFrame([avg_data])
+    df_display = pd.concat([avg_row, df_display], ignore_index=True)
+
+    # Format numeric columns
+    for col in numeric_cols:
+        fmt = (lambda x, c=col: f"{int(round(x))}" if pd.notnull(x) else x) if col == deline_col \
+            else (lambda x, c=col: f"{x:.2f}" if pd.notnull(x) else x)
+        df_display[col] = df_display[col].apply(fmt)
+
+    # Style function
+    def highlight_rows(row):
+        if row.name == 0:  # Average row
+            return ['background-color: lightblue; font-weight: bold'] * len(row)
+        return [
+            'background-color: lightblue; font-weight: bold' if i == 0
+            else 'background-color: yellow' if col in numeric_cols and col != decline_col and row[col] != '0.00'
+            else ''
+            for i, col in enumerate(df_display.columns)
+        ]
+
+    styled = df_display.style.apply(highlight_rows, axis=1).set_properties(**{'text-align': 'center'})
+    st.dataframe(styled, use_container_width=True)
+
 def get_investing_data():
     # Show top indicators first
     topIndicatorInfo()
@@ -276,10 +307,9 @@ def get_investing_data():
     # Display Bitcoin Cycle Peaks Excel data below topIndicatorInfo
     file_path = "data/bitcoin_cycle_peaks.xlsx"
     try:
+        # Load your Excel file
         df = pd.read_excel(file_path)
-        # Convert all numeric columns to strings with 1 decimal place
-        df = df.apply(lambda x: x.map("{:.2f}".format) if pd.api.types.is_numeric_dtype(x) else x)
-        st.dataframe(df)
+        show_df_with_avg(df)
     except FileNotFoundError:
         st.error(f"File not found: {file_path}")
     except Exception as e:
@@ -510,5 +540,4 @@ def get_footer_data():
         st.markdown("[Frasers Centrepoint](https://www.tradingview.com/chart/?symbol=SGX%3AJ69U)")
         st.markdown("[CapitaLand ICT](https://www.tradingview.com/chart/?symbol=SGX%3AC38U)")
         st.markdown("[SPDR Homebuilders](https://www.tradingview.com/chart/?symbol=AMEX%3AXHB)")
-
         st.markdown("[Lowe's](https://www.tradingview.com/chart/?symbol=NYSE%3ALOW)")
