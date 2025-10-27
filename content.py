@@ -1,8 +1,4 @@
-import streamlit as st
 import streamlit.components.v1 as components
-import pandas as pd
-import requests
-from bs4 import BeautifulSoup
 import re
 from TA import *
 from FA import *
@@ -220,8 +216,27 @@ def show_iframes(pairs=None, singles=None):
                 components.html(f'<iframe src="{r}" width=100% height="800" style="border:none"></iframe>', height=800)
 
 def topIndicatorInfo():
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
+
     with col1:
+        st.success("**Prompts**")
+        gpt_prompt_copy(
+            txt_file=get_prompt_path("bitcoin_peak_prompt.txt"),
+            placeholder="",
+            replacement="",
+            name="Top Warning History Prompt",
+            key_suffix="1"
+        )
+
+        gpt_prompt_copy(
+            txt_file=get_prompt_path("bitcoin_peak_prompt_grok.txt"),
+            placeholder="",
+            replacement="",
+            name="Top Warning History Prompt (Grok)",
+            key_suffix="2"
+        )
+
+    with col2:
         st.success("**Top Warning ✅**")
         st.markdown(f"""
         - <span style="background-color: yellow; font-weight:bold;">Pi Cycle (watch closely)</span> – signals BTC peak
@@ -233,7 +248,7 @@ def topIndicatorInfo():
         - Non-traders piling into meme coins, profits all over social media.  
         """, unsafe_allow_html=True)
 
-    with col2:
+    with col3:
         st.success("**Confirm**")
         st.write("""
         - **CBBI** – bull market strength  
@@ -243,7 +258,7 @@ def topIndicatorInfo():
         - **Altcoin Season** – altcoins peaking
         """)
 
-    with col3:
+    with col4:
         st.success("**Secondary**")
         st.write("""
         - **RSI** – short-term overbought  
@@ -255,11 +270,26 @@ def topIndicatorInfo():
         """)
 
 def get_investing_data():
+    # Show top indicators first
     topIndicatorInfo()
 
+    # Display Bitcoin Cycle Peaks Excel data below topIndicatorInfo
+    file_path = "data/bitcoin_cycle_peaks.xlsx"
+    try:
+        df = pd.read_excel(file_path)
+        # Convert all numeric columns to strings with 1 decimal place
+        df = df.apply(lambda x: x.map("{:.2f}".format) if pd.api.types.is_numeric_dtype(x) else x)
+        st.table(df)
+    except FileNotFoundError:
+        st.error(f"File not found: {file_path}")
+    except Exception as e:
+        st.error(f"Error reading Excel file: {e}")
+
+    # Define your other tabs (without Bitcoin Cycle Peaks)
     singles = [
         ("Bull Peak", "https://www.coinglass.com/bull-market-peak-signals", 1000),
         ("Pi Cycle", "https://www.coinglass.com/pro/i/pi-cycle-top-indicator", 1000),
+        ("NUPL", "https://www.coinglass.com/pro/i/nupl", 1000),
         ("CDRI", "https://www.coinglass.com/pro/i/CDRI", 1000),
         ("RSI HeatMap", "https://www.coinglass.com/pro/i/RsiHeatMap", 1000),
         ("Exchange Balance", "https://www.coinglass.com/Balance", 1000),
@@ -272,6 +302,7 @@ def get_investing_data():
         with tab:
             st.components.v1.iframe(url, height=h, scrolling=True)
 
+    # Existing USDT/USDC charts
     st.success("**USDT/USDC Dominance** - High = flight to stablecoins")
     st.markdown("**Use 1M charts** for bull tops (USDT.D, USDC.D, TOTAL, TOTAL2, TOTAL3)")
 

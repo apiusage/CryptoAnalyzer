@@ -7,7 +7,7 @@ from st_copy_to_clipboard import st_copy_to_clipboard
 
 CMC_API_KEY = 'fcf7ee51-af70-4614-821a-f253d1f0d7da'
 
-def gpt_prompt_copy(txt_file, placeholder, replacement, name="", key_suffix="", show_text=False):
+def gpt_prompt_copy(txt_file, placeholder="", replacement="", name="", key_suffix="", show_text=False):
     try:
         content = open(txt_file, encoding="utf-8").read().replace(placeholder, replacement)
         st_copy_to_clipboard(content,
