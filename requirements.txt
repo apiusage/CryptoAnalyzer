@@ -5,3 +5,4 @@ beautifulsoup4
 streamlit-option-menu
 yfinance
 numpy
+openpyxl
